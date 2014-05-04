@@ -4,7 +4,10 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include <datastore\IField.h>
+#include <exception>
+#include <tclap/CmdLine.h>
+#include <datastore/IField.h>
+#include <datastore/Scheme.h>
 
 static const char kFieldDelimiter = '|';
 
@@ -17,6 +20,12 @@ int main(int argc, char** argv)
 
     cmd.add(schemeArg);
     cmd.parse(argc, argv);
+
+    //
+    //
+    //
+
+    DataStore::Scheme scheme(schemeArg.getValue().c_str());
 
     //
     // Read records from stdin
@@ -38,6 +47,10 @@ int main(int argc, char** argv)
   catch (TCLAP::ArgException &e)
   {
     std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+  }
+  catch (std::exception& ex)
+  {
+    std::cerr << "error: " << ex.what() << std::endl;
   }
 
 	return 0;

@@ -6,10 +6,11 @@ namespace DataStore
 {
   typedef enum
   {
-    FieldType_Text,
-    FieldType_Float,
-    FieldType_Date,
-    FieldType_Time
+    kFieldType_Unknown,
+    kFieldType_Text,
+    kFieldType_Float,
+    kFieldType_Date,
+    kFieldType_Time
   } FieldType;
 }
 

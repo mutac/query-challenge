@@ -11,13 +11,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\datastore\FieldDescriptor.h" />
     <ClInclude Include="..\..\src\datastore\FieldType.h" />
     <ClInclude Include="..\..\src\datastore\IField.h" />
+    <ClInclude Include="..\..\src\datastore\Scheme.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\datastore\FieldDescriptor.cpp" />
+    <ClCompile Include="..\..\src\datastore\Scheme.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A986141E-3FA1-42E1-A865-6EEF5AB6A1A9}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Datastore</RootNamespace>
+    <ProjectName>DataStore</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -44,7 +51,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\..\src;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\lib;..\..\src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

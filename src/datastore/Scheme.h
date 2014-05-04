@@ -57,11 +57,16 @@ namespace DataStore
   class Scheme
   {
   public:
-    // JSON scheme descriptor file
+    typedef std::vector<std::shared_ptr<IFieldValueDescriptor> > FieldDescritors;
+
+    /** JSON scheme descriptor file */
     Scheme(const char* schemeDescriptorFile);
 
-    // Return fields of scheme
-    const std::vector<IFieldDescriptor>& getFields();
+    /** Returns true if header field names match scheme */
+    bool validateHeader(const std::vector<std::string>& headerFieldNames) const;
+
+    /** Return fields of scheme */
+    const FieldDescritors& getFieldDescriptors() const;
 
   private:
     std::shared_ptr<SchemeImpl> mImpl;

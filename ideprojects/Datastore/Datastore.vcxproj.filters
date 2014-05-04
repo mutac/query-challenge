@@ -11,9 +11,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\datastore\IField.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\datastore\FieldType.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -21,6 +18,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\datastore\FieldDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\datastore\FieldValue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -13,7 +13,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\datastore\FieldDescriptor.h" />
     <ClInclude Include="..\..\src\datastore\FieldType.h" />
-    <ClInclude Include="..\..\src\datastore\IField.h" />
+    <ClInclude Include="..\..\src\datastore\FieldValue.h" />
     <ClInclude Include="..\..\src\datastore\Scheme.h" />
   </ItemGroup>
   <ItemGroup>

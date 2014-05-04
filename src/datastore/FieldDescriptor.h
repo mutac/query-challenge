@@ -1,8 +1,8 @@
 
-#ifndef __IFIELD_DESCRIPTOR_H__
-#define __IFIELD_DESCRIPTOR_H__
+#ifndef __FIELD_DESCRIPTOR_H__
+#define __FIELD_DESCRIPTOR_H__
 
-#include <datastore/IField.h>
+#include <datastore/FieldValue.h>
 #include <string>
 #include <memory>
 
@@ -10,16 +10,16 @@ namespace DataStore
 {
   /**
   */
-  struct IFieldDescriptor
+  struct IFieldValueDescriptor
   {
     virtual const char* getName() const = 0;
     virtual const char* getDescription() const = 0;
     virtual FieldType getType() const = 0;
     virtual size_t getSize() const = 0;
     /*
-    virtual std::shared_ptr<IField> tryParse(const char* fieldString) const = 0;
+    virtual std::shared_ptr<IFieldValue> tryParse(const char* fieldString) const = 0;
     */
-    virtual std::shared_ptr<IField> tryParse(const char* fieldString) const = 0;
+    virtual std::shared_ptr<IFieldValue> tryParse(const char* fieldString) const = 0;
   };
 
   /**
@@ -27,7 +27,7 @@ namespace DataStore
   class FieldDescriptorFactory
   {
   public:
-    static std::shared_ptr<IFieldDescriptor> Create(FieldType type,
+    static std::shared_ptr<IFieldValueDescriptor> Create(FieldType type,
     const char* name, const char* description, size_t size);
 
   private:
@@ -36,7 +36,7 @@ namespace DataStore
 
   /**
   */
-  class FieldDescriptorBase : public IFieldDescriptor
+  class FieldDescriptorBase : public IFieldValueDescriptor
   {
   public:
     virtual const char* getName() const
@@ -83,7 +83,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IField> tryParse(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> tryParse(const char* fieldString) const;
   };
 
   /**
@@ -96,7 +96,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IField> tryParse(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> tryParse(const char* fieldString) const;
   };
 
   /**
@@ -109,7 +109,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IField> tryParse(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> tryParse(const char* fieldString) const;
   };
 
   /**
@@ -122,7 +122,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IField> tryParse(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> tryParse(const char* fieldString) const;
   };
 }
 

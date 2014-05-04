@@ -18,6 +18,7 @@ namespace DataStore
   class SchemeImpl
   {
   public:
+
     SchemeImpl(const char* schemeFilename)
     {
       FILE* schemeFile = fopen(schemeFilename, "r");
@@ -35,6 +36,8 @@ namespace DataStore
     /** Build scheme from JSON, or throw if format is incorrect */
     void setScheme()
     {
+      mFields.clear();
+
       for (rapidjson::Value::ConstValueIterator field = mScheme.Begin();
         field != mScheme.End(); ++field)
       {
@@ -94,7 +97,7 @@ namespace DataStore
           throw std::exception("Invalid Scheme JSON: required field missing");
         }
 
-        std::shared_ptr<IFieldDescriptor> fieldDescriptor;
+        std::shared_ptr<IFieldValueDescriptor> fieldDescriptor;
         fieldDescriptor = FieldDescriptorFactory::Create(type, name.c_str(), 
           description.c_str(), size);
         if (!fieldDescriptor)
@@ -136,13 +139,49 @@ namespace DataStore
       return kTypeNames[(int)type];
     }
 
+    const Scheme::FieldDescritors& getFieldDescriptors() const
+    {
+      return mFields;
+    }
+
   private:
     rapidjson::Document mScheme;
-    std::vector<std::shared_ptr<IFieldDescriptor> > mFields;
+    Scheme::FieldDescritors mFields;
   };
 }
 
 Scheme::Scheme(const char* schemeJson) 
   : mImpl(new SchemeImpl(schemeJson))
 {
+}
+
+bool Scheme::validateHeader(const std::vector<std::string>& headerFieldNames) const
+{
+  const FieldDescritors& fields = getFieldDescriptors();
+
+  if (fields.size() != headerFieldNames.size())
+  {
+    return false;
+  }
+
+  FieldDescritors::const_iterator field = fields.begin();
+  std::vector<std::string>::const_iterator headerFieldName = headerFieldNames.begin();
+
+  while (field != fields.end() && headerFieldName != headerFieldNames.end())
+  {
+    if (*headerFieldName != (*field)->getName())
+    {
+      return false;
+    }
+
+    ++field;
+    ++headerFieldName;
+  }
+
+  return true;
+}
+
+const Scheme::FieldDescritors& Scheme::getFieldDescriptors() const
+{
+  return mImpl->getFieldDescriptors();
 }

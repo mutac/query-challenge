@@ -1,6 +1,6 @@
 
-#ifndef __IFIELD_H__
-#define __IFIELD_H__
+#ifndef __IFieldValue_H__
+#define __IFieldValue_H__
 
 #include <datastore/FieldType.h>
 #include <memory>
@@ -10,7 +10,7 @@ namespace DataStore
 
   /**
   */
-  struct IField
+  struct IFieldValue
   {
   public:
     int dummy;

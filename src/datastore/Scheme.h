@@ -57,7 +57,7 @@ namespace DataStore
   class Scheme
   {
   public:
-    typedef std::vector<std::shared_ptr<IFieldValueDescriptor> > FieldDescritors;
+    typedef std::vector<std::shared_ptr<IFieldDescriptor> > FieldDescritors;
 
     /** JSON scheme descriptor file */
     Scheme(const char* schemeDescriptorFile);

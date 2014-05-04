@@ -12,7 +12,7 @@
 
 static const char kFieldDelimiter = '|';
 
-bool getFields(const std::string& row, std::vector<std::string>* outFields)
+bool getValues(const std::string& row, std::vector<std::string>* outFields)
 {
   outFields->clear();
 
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     line++;
 
     std::vector<std::string> headerFieldNames;
-    getFields(header, &headerFieldNames);
+    getValues(header, &headerFieldNames);
     if (!scheme.validateHeader(headerFieldNames))
     {
       throw std::exception("Header does not match scheme");
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
       if (row.size() > 0)
       {
         std::vector<std::string> values;
-        getFields(row, &values);
+        getValues(row, &values);
 
         // Make sure that the row has the right number of fields
         if (values.size() != fieldDescriptors.size())
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
           ++value, ++fieldDesriptor)
         {
           std::shared_ptr<DataStore::IFieldValue> fieldValue = 
-            (*fieldDesriptor)->tryParse(value->c_str());
+            (*fieldDesriptor)->deserialize(value->c_str());
 
           if (!fieldValue)
           {

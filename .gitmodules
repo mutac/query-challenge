@@ -1,0 +1,3 @@
+[submodule "lib/resource"]
+	path = lib/resource
+	url = git@github.com:mutac/Magnetometer.git

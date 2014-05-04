@@ -12,8 +12,6 @@ namespace DataStore
   */
   struct IFieldValue
   {
-  public:
-    int dummy;
   };
 }
 

@@ -97,7 +97,7 @@ namespace DataStore
           throw std::exception("Invalid Scheme JSON: required field missing");
         }
 
-        std::shared_ptr<IFieldValueDescriptor> fieldDescriptor;
+        std::shared_ptr<IFieldDescriptor> fieldDescriptor;
         fieldDescriptor = FieldDescriptorFactory::Create(type, name.c_str(), 
           description.c_str(), size);
         if (!fieldDescriptor)
@@ -165,9 +165,9 @@ bool Scheme::validateHeader(const std::vector<std::string>& headerFieldNames) co
   }
 
   FieldDescritors::const_iterator field = fields.begin();
-  std::vector<std::string>::const_iterator headerFieldName = headerFieldNames.begin();
+  std::vector<std::string>::const_iterator headerFieldName = headerFieldNames.cbegin();
 
-  while (field != fields.end() && headerFieldName != headerFieldNames.end())
+  while (field != fields.end() && headerFieldName != headerFieldNames.cend())
   {
     if (*headerFieldName != (*field)->getName())
     {

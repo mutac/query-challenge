@@ -3,25 +3,32 @@
 #define __FIELD_DESCRIPTOR_H__
 
 #include <datastore/FieldValue.h>
+#include <Resource/TypeInfo.h>
 #include <string>
 #include <memory>
 
 namespace DataStore
 {
+  using mResource::TypeInfo;
+  using mResource::TypeInfo_String;
+  using mResource::TypeInfo_Float;
+  using mResource::TypeInfo_Date;
+  using mResource::TypeInfo_Time;
+
   /**
   */
   struct IFieldDescriptor
   {
     virtual const char* getName() const = 0;
     virtual const char* getDescription() const = 0;
-    virtual FieldType getType() const = 0;
+    virtual TypeInfo getType() const = 0;
     virtual size_t getSize() const = 0;
 
     // Deserialize a value of a specific type:
     // Note:  This interface should actually support
     // a more generic serializer/deserializer interface.
     // For simplicity, the interface supprts only strings.
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* fieldString) const = 0;
+    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const = 0;
   };
 
   /**
@@ -29,7 +36,7 @@ namespace DataStore
   class FieldDescriptorFactory
   {
   public:
-    static std::shared_ptr<IFieldDescriptor> Create(FieldType type,
+    static std::shared_ptr<IFieldDescriptor> Create(TypeInfo type,
     const char* name, const char* description, size_t size);
 
   private:
@@ -51,7 +58,7 @@ namespace DataStore
       return mDescrition.c_str();
     }
 
-    virtual FieldType getType() const
+    virtual TypeInfo getType() const
     {
       return mType;
     }
@@ -62,7 +69,7 @@ namespace DataStore
     }
 
   protected:
-    FieldDescriptorBase(FieldType type, const char* name,
+    FieldDescriptorBase(TypeInfo type, const char* name,
       const char* description, size_t size = 0) :
       mType(type), mName(name), mDescrition(description), mSize(size)
     {
@@ -71,7 +78,7 @@ namespace DataStore
   private:
     std::string mName;
     std::string mDescrition;
-    FieldType mType;
+    TypeInfo mType;
     size_t mSize;
   };
 
@@ -81,11 +88,11 @@ namespace DataStore
   {
   public:
     TextFieldDescriptor(const char* name, const char* description, size_t size) :
-      FieldDescriptorBase(kFieldType_Text, name, description, size)
+      FieldDescriptorBase(TypeInfo_String, name, description, size)
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
   };
 
   /**
@@ -94,11 +101,11 @@ namespace DataStore
   {
   public:
     DateFieldDescriptor(const char* name, const char* description) :
-      FieldDescriptorBase(kFieldType_Date, name, description, 0)
+      FieldDescriptorBase(TypeInfo_Date, name, description, 0)
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
   };
 
   /**
@@ -107,11 +114,11 @@ namespace DataStore
   {
   public:
     TimeFieldDescriptor(const char* name, const char* description) :
-      FieldDescriptorBase(kFieldType_Date, name, description, 0)
+      FieldDescriptorBase(TypeInfo_Time, name, description, 0)
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
   };
 
   /**
@@ -120,11 +127,11 @@ namespace DataStore
   {
   public:
     FloatFieldDescriptor(const char* name, const char* description, size_t size) :
-      FieldDescriptorBase(kFieldType_Date, name, description, size)
+      FieldDescriptorBase(TypeInfo_Float, name, description, size)
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* fieldString) const;
+    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
   };
 }
 

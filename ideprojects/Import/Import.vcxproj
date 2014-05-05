@@ -50,7 +50,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\lib;..\..\src;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\lib\resource\libraries;..\..\lib;..\..\src;$(IncludePath)</IncludePath>
     <LibraryPath>..\Debug;$(LibraryPath)</LibraryPath>
     <CustomBuildAfterTargets>
     </CustomBuildAfterTargets>
@@ -64,13 +64,13 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>DataStore.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DataStore.lib;Resource.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
       <Command>

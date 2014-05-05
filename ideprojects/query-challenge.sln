@@ -9,8 +9,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Import", "Import\Import.vcx
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DataStore", "Datastore\Datastore.vcxproj", "{A986141E-3FA1-42E1-A865-6EEF5AB6A1A9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B} = {D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "tests\tests.vcxproj", "{E0F48A6A-03B4-402B-ABA3-1CDA1BE39D44}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A986141E-3FA1-42E1-A865-6EEF5AB6A1A9} = {A986141E-3FA1-42E1-A865-6EEF5AB6A1A9}
+		{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B} = {D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Resource", "..\lib\resource\ideprojects\Resource\Resource\vs2013\Resource\Resource.vcxproj", "{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}"
 EndProject

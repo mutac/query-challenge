@@ -2,6 +2,13 @@
 */
 
 #include <datastore/Scheme.h>
+
+#define RAPIDJSON_ASSERT(x)             \
+  do {                                  \
+    if (!(x))                           \
+      throw std::exception(#x);         \
+  } while(0)
+
 #include <rapidjson/document.h>
 #include <rapidjson/filestream.h>
 #include <fstream>
@@ -15,18 +22,17 @@ namespace DataStore
   /**
     Hide implementation details from client code--avoid including rapidjson publically.
   */
-  class SchemeImpl
+  class SchemeJsonImpl
   {
   public:
-
-    SchemeImpl(const char* schemeFilename)
+    SchemeJsonImpl(const char* schemeJson)
     {
-      FILE* schemeFile = fopen(schemeFilename, "r");
-      if (!schemeFile)
-      {
-        throw std::exception("Unable to open scheme file");
-      }
+      mScheme.Parse<0>(schemeJson);
+      setScheme();
+    }
 
+    SchemeJsonImpl(FILE* schemeFile)
+    {
       rapidjson::FileStream schemeStream(schemeFile);
       mScheme.ParseStream<0>(schemeStream);
 
@@ -37,6 +43,11 @@ namespace DataStore
     void setScheme()
     {
       mFields.clear();
+
+      if (!mScheme.IsArray())
+      {
+        throw std::exception("Invalid Scheme JSON: expected array");
+      }
 
       for (rapidjson::Value::ConstValueIterator field = mScheme.Begin();
         field != mScheme.End(); ++field)
@@ -59,7 +70,7 @@ namespace DataStore
 
         std::string name;
         std::string description;
-        FieldType type = kFieldType_Unknown;
+        TypeInfo type = mResource::TypeInfo_Empty;
         size_t size = 0;
 
         for (rapidjson::Value::ConstMemberIterator member = field->MemberBegin(); 
@@ -92,7 +103,7 @@ namespace DataStore
         }
 
         // Check required members
-        if (name.empty() || type == kFieldType_Unknown)
+        if (name.empty() || type == mResource::TypeInfo_Empty)
         {
           throw std::exception("Invalid Scheme JSON: required field missing");
         }
@@ -112,19 +123,19 @@ namespace DataStore
     }
 
     /** Parse supported data types, return FieldType which corresponds */
-    FieldType parseTypeName(const char* type)
+    TypeInfo parseTypeName(const char* type)
     {
       std::string typeName(type);
       if (typeName == "text")
-        return kFieldType_Text;
+        return mResource::TypeInfo_String;
       else if (typeName == "date")
-        return kFieldType_Date;
+        return mResource::TypeInfo_Date;
       else if (typeName == "float")
-        return kFieldType_Float;
+        return mResource::TypeInfo_Float;
       else if (typeName == "time")
-        return kFieldType_Time;
+        return mResource::TypeInfo_Time;
       else
-        return kFieldType_Unknown;
+        return mResource::TypeInfo_Empty;
     }
 
     /** Given a rapidjson type, return a string describing it.  For error reporting... */
@@ -139,32 +150,37 @@ namespace DataStore
       return kTypeNames[(int)type];
     }
 
-    const Scheme::FieldDescritors& getFieldDescriptors() const
+    const IScheme::IFieldDescritors& getFieldDescriptors() const
     {
       return mFields;
     }
 
   private:
     rapidjson::Document mScheme;
-    Scheme::FieldDescritors mFields;
+    IScheme::IFieldDescritors mFields;
   };
 }
 
-Scheme::Scheme(const char* schemeJson) 
-  : mImpl(new SchemeImpl(schemeJson))
+SchemeJson::SchemeJson(FILE* schemeFile) 
+  : mImpl(new SchemeJsonImpl(schemeFile))
 {
 }
 
-bool Scheme::validateHeader(const std::vector<std::string>& headerFieldNames) const
+SchemeJson::SchemeJson(const char* schemeJson) 
+  : mImpl(new SchemeJsonImpl(schemeJson))
 {
-  const FieldDescritors& fields = getFieldDescriptors();
+}
+
+bool SchemeJson::validateHeader(const std::vector<std::string>& headerFieldNames) const
+{
+  const IFieldDescritors& fields = getFieldDescriptors();
 
   if (fields.size() != headerFieldNames.size())
   {
     return false;
   }
 
-  FieldDescritors::const_iterator field = fields.begin();
+  IFieldDescritors::const_iterator field = fields.begin();
   std::vector<std::string>::const_iterator headerFieldName = headerFieldNames.cbegin();
 
   while (field != fields.end() && headerFieldName != headerFieldNames.cend())
@@ -181,7 +197,7 @@ bool Scheme::validateHeader(const std::vector<std::string>& headerFieldNames) co
   return true;
 }
 
-const Scheme::FieldDescritors& Scheme::getFieldDescriptors() const
+const IScheme::IFieldDescritors& SchemeJson::getFieldDescriptors() const
 {
   return mImpl->getFieldDescriptors();
 }

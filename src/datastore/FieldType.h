@@ -5,6 +5,7 @@
 #include <Resource/TypeInfo.h>
 #include <Resource/Variant.h>
 #include <Resource/mString.h>
+#include <time.h>
 #include <inttypes.h>
 
 namespace DataStore

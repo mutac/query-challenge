@@ -45,15 +45,16 @@ int main(int argc, char** argv)
       input = &inputFile;
     }
 
-    //
-    //
-    //
-
     FILE* schemeFile = fopen(schemeArg.getValue().c_str(), "r");
     if (!schemeFile)
     {
       throw std::exception("Unable to open scheme file");
     }
+
+    //
+    // Parse the scheme, and get the FieldDescriptors that will
+    // describe how to parse the input rows.
+    //
 
     DataStore::SchemeJson scheme(schemeFile);
     DataStore::IScheme::IFieldDescritors fieldDescriptors = scheme.getFieldDescriptors();
@@ -100,7 +101,7 @@ int main(int argc, char** argv)
         while (value != values.cend() && fieldDesriptor != fieldDescriptors.cend())
         {
           std::shared_ptr<DataStore::IFieldValue> fieldValue = 
-            (*fieldDesriptor)->deserialize(value->c_str(), value->length());
+            (*fieldDesriptor)->fromString(value->c_str());
  
           if (!fieldValue)
           {

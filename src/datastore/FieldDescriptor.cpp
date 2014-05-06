@@ -4,26 +4,15 @@
 
 using namespace DataStore;
 
-std::shared_ptr<IFieldValue> TextFieldDescriptor::deserialize(const char* bytes, size_t size) const
+std::shared_ptr<IFieldValue> TextFieldDescriptor::fromString(const char* str) const
 {
-  //
-  // Assume that encoding is plain text:
-  //
-  // No deserialization necessary, just
-  // store the string.
-  //
-
-  return std::shared_ptr<IFieldValue>(new FieldValue((char*)bytes));
+  return std::shared_ptr<IFieldValue>(new FieldValue((char*)str));
 }
 
-std::shared_ptr<IFieldValue> DateFieldDescriptor::deserialize(const char* bytes, size_t size) const
+std::shared_ptr<IFieldValue> DateFieldDescriptor::fromString(const char* str) const
 {
-  // 
-  // Assume that encoding is plain text:
-  //
-
   DataStore::Date date;
-  if (date.fromString(bytes))
+  if (date.fromString(str))
   {
     return std::shared_ptr<IFieldValue>(new FieldValue(date));
   }
@@ -33,14 +22,14 @@ std::shared_ptr<IFieldValue> DateFieldDescriptor::deserialize(const char* bytes,
   }
 }
 
-std::shared_ptr<IFieldValue> TimeFieldDescriptor::deserialize(const char* bytes, size_t size) const
+std::shared_ptr<IFieldValue> TimeFieldDescriptor::fromString(const char* str) const
 {
   // 
   // Assume that encoding is plain text:
   //
 
   DataStore::Time time;
-  if (time.fromString(bytes))
+  if (time.fromString(str))
   {
     return std::shared_ptr<IFieldValue>(new FieldValue(time));
   }
@@ -50,14 +39,9 @@ std::shared_ptr<IFieldValue> TimeFieldDescriptor::deserialize(const char* bytes,
   }
 }
 
-std::shared_ptr<IFieldValue> FloatFieldDescriptor::deserialize(const char* bytes, size_t size) const
+std::shared_ptr<IFieldValue> FloatFieldDescriptor::fromString(const char* str) const
 {
-  // 
-  // Assume that encoding is plain text:
-  // Use variant string-to-float conversion to deserialize
-  //
-
-  mStd::Variant v(bytes);
+  mStd::Variant v(str);
   if (v.changeType(TypeInfo_Float))
   {
     return std::shared_ptr<IFieldValue>(new FieldValue(v));

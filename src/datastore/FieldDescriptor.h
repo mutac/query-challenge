@@ -20,10 +20,10 @@ namespace DataStore
     virtual TypeInfo getType() const = 0;
     virtual size_t getSize() const = 0;
 
-    // For simplicity serialization & deserialization can only have
-    // one encoding: a string.  This could be generalized to work
-    // with any encoding.
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const = 0;
+    /** Create a new instance of a FieldValue by parsing a string, 
+        NULL if parsing failed 
+     */
+    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const = 0;
   };
 
   /**
@@ -87,7 +87,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
+    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
   };
 
   /**
@@ -100,7 +100,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
+    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
   };
 
   /**
@@ -113,7 +113,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
+    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
   };
 
   /**
@@ -126,7 +126,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const;
+    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
   };
 }
 

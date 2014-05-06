@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     DataStore::IScheme::IFieldDescritors fieldDescriptors = scheme.getFieldDescriptors();
 
     //
-    // Read records from input, parse, and validate that it matches scheme
+    // Read records from input, parse, and validate that they match scheme
     //
 
     size_t line = 1;
@@ -91,15 +91,17 @@ int main(int argc, char** argv)
           throw std::exception(str.c_str());
         }
 
-        // Parse each value in row.  Iterators... blech
-        DataStore::IScheme::IFieldDescritors::const_iterator fieldDesriptor = fieldDescriptors.cbegin();
-        for (std::vector<std::string>::const_iterator value = values.cbegin();
-          value != values.cend() && fieldDesriptor != fieldDescriptors.cend();
-          ++value, ++fieldDesriptor)
+        // Parse each value in row.  Iterators and smart pointers... blech
+        
+        DataStore::IScheme::IFieldDescritors::const_iterator fieldDesriptor = 
+          fieldDescriptors.cbegin();
+        std::vector<std::string>::const_iterator value = values.cbegin();
+
+        while (value != values.cend() && fieldDesriptor != fieldDescriptors.cend())
         {
           std::shared_ptr<DataStore::IFieldValue> fieldValue = 
             (*fieldDesriptor)->deserialize(value->c_str(), value->length());
-
+ 
           if (!fieldValue)
           {
             std::stringstream ex;
@@ -108,9 +110,12 @@ int main(int argc, char** argv)
             std::string str = ex.str();
             throw std::exception(str.c_str());
           }
+
+          ++value;
+          ++fieldDesriptor;
         }
 
-        line++;
+        ++line;
       }
     }
   }

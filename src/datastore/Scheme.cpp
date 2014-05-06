@@ -3,6 +3,7 @@
 
 #include <datastore/Scheme.h>
 
+// Throw exceptions rather than assert on JSON parsing failures:
 #define RAPIDJSON_ASSERT(x)             \
   do {                                  \
     if (!(x))                           \
@@ -15,7 +16,8 @@
 #include <streambuf>
 #include <string>
 
-using namespace DataStore;
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 namespace DataStore
 {
@@ -70,7 +72,7 @@ namespace DataStore
 
         std::string name;
         std::string description;
-        TypeInfo type = mResource::TypeInfo_Empty;
+        TypeInfo type = DataStore::TypeInfo_Empty;
         size_t size = 0;
 
         for (rapidjson::Value::ConstMemberIterator member = field->MemberBegin(); 
@@ -103,7 +105,7 @@ namespace DataStore
         }
 
         // Check required members
-        if (name.empty() || type == mResource::TypeInfo_Empty)
+        if (name.empty() || type == DataStore::TypeInfo_Empty)
         {
           throw std::exception("Invalid Scheme JSON: required field missing");
         }
@@ -127,15 +129,15 @@ namespace DataStore
     {
       std::string typeName(type);
       if (typeName == "text")
-        return mResource::TypeInfo_String;
+        return DataStore::TypeInfo_String;
       else if (typeName == "date")
-        return mResource::TypeInfo_Date;
+        return DataStore::TypeInfo_Date;
       else if (typeName == "float")
-        return mResource::TypeInfo_Float;
+        return DataStore::TypeInfo_Float;
       else if (typeName == "time")
-        return mResource::TypeInfo_Time;
+        return DataStore::TypeInfo_Time;
       else
-        return mResource::TypeInfo_Empty;
+        return DataStore::TypeInfo_Empty;
     }
 
     /** Given a rapidjson type, return a string describing it.  For error reporting... */
@@ -160,6 +162,10 @@ namespace DataStore
     IScheme::IFieldDescritors mFields;
   };
 }
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
+using namespace DataStore;
 
 SchemeJson::SchemeJson(FILE* schemeFile) 
   : mImpl(new SchemeJsonImpl(schemeFile))

@@ -3,17 +3,13 @@
 #define __FIELD_DESCRIPTOR_H__
 
 #include <datastore/FieldValue.h>
-#include <Resource/TypeInfo.h>
+#include <datastore/FieldType.h>
 #include <string>
 #include <memory>
 
 namespace DataStore
 {
-  using mResource::TypeInfo;
-  using mResource::TypeInfo_String;
-  using mResource::TypeInfo_Float;
-  using mResource::TypeInfo_Date;
-  using mResource::TypeInfo_Time;
+
 
   /**
   */
@@ -24,10 +20,9 @@ namespace DataStore
     virtual TypeInfo getType() const = 0;
     virtual size_t getSize() const = 0;
 
-    // Deserialize a value of a specific type:
-    // Note:  This interface should actually support
-    // a more generic serializer/deserializer interface.
-    // For simplicity, the interface supprts only strings.
+    // For simplicity serialization & deserialization can only have
+    // one encoding: a string.  This could be generalized to work
+    // with any encoding.
     virtual std::shared_ptr<IFieldValue> deserialize(const char* bytes, size_t size) const = 0;
   };
 

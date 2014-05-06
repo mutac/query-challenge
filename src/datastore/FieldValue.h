@@ -10,7 +10,7 @@ namespace DataStore
   */
   struct IFieldValue
   {
-    virtual const mResource::Variant& getValue() const = 0;
+    virtual const mStd::Variant& getValue() const = 0;
   };
 
   /**
@@ -18,18 +18,25 @@ namespace DataStore
   class FieldValue : public IFieldValue
   {
   public:
-    FieldValue(const mResource::Variant& v) :
+    FieldValue(const mStd::Variant& v) :
       mValue(v)
     {
     }
 
-    const mResource::Variant& getValue() const
+    /** Short-cut:  Variant must be assinable to T */
+    template<typename T>
+    FieldValue(const T& v) :
+      mValue(v)
+    {
+    }
+
+    const mStd::Variant& getValue() const
     {
       return mValue;
     }
 
   private:
-    mResource::Variant mValue;
+    mStd::Variant mValue;
   };
 }
 

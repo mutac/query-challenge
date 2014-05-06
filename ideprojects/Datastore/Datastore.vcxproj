@@ -15,9 +15,11 @@
     <ClInclude Include="..\..\src\datastore\FieldType.h" />
     <ClInclude Include="..\..\src\datastore\FieldValue.h" />
     <ClInclude Include="..\..\src\datastore\Scheme.h" />
+    <ClInclude Include="..\..\src\datastore\Storage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\datastore\FieldDescriptor.cpp" />
+    <ClCompile Include="..\..\src\datastore\FieldType.cpp" />
     <ClCompile Include="..\..\src\datastore\Scheme.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

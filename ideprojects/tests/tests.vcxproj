@@ -12,6 +12,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\datastore\tests\TestScheme.cpp" />
+    <ClCompile Include="TestDate.cpp" />
+    <ClCompile Include="TestTime.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E0F48A6A-03B4-402B-ABA3-1CDA1BE39D44}</ProjectGuid>

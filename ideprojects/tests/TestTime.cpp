@@ -16,17 +16,17 @@ namespace Tests
 
       bool isValid = false;
 
-      isValid = time.fromString("00:00:00");
+      isValid = time.fromString("00:00");
       Assert::IsTrue(isValid);
-      Assert::IsTrue(time.toString() == "00:00:00");
+      Assert::IsTrue(time.toString() == "00:0000");
 
-      isValid = time.fromString("01:02:03");
+      isValid = time.fromString("01:02");
       Assert::IsTrue(isValid);
-      Assert::IsTrue(time.toString() == "01:02:03");
+      Assert::IsTrue(time.toString() == "01:0002");
 
-      isValid = time.fromString("23:59:59");
+      isValid = time.fromString("23:124");
       Assert::IsTrue(isValid);
-      Assert::IsTrue(time.toString() == "23:59:59");
+      Assert::IsTrue(time.toString() == "23:0124");
 		}
 
 	};

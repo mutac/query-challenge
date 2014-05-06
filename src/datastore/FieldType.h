@@ -5,7 +5,7 @@
 #include <Resource/TypeInfo.h>
 #include <Resource/Variant.h>
 #include <Resource/mString.h>
-#include <time.h>
+#include <inttypes.h>
 
 namespace DataStore
 {
@@ -43,7 +43,7 @@ namespace DataStore
   };
 
   /**
-    Time type: hours:seconds
+    Time type: HH:SSSS
   */
   class Time
   {
@@ -57,8 +57,7 @@ namespace DataStore
     mStd::mString toString() const;
 
   private:
-    // Could use smaller type
-    time_t mTime;
+    uint32_t mTime;
   };
 }
 

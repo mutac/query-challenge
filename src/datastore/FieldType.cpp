@@ -54,16 +54,11 @@ bool Time::fromString(const char* str)
   int minute = 0;
   int seconds = 0;
 
-  int found = sscanf(str, "%d:%d:%d", &hour, &minute, &seconds);
-  if (found == 3)
+  int found = sscanf(str, "%d:%d", &hour, &seconds);
+  if (found == 2)
   {
-    struct tm timeDetails = { 0 };
-    timeDetails.tm_hour = hour;
-    timeDetails.tm_min = minute;
-    timeDetails.tm_sec = seconds;
-
-    mTime = mktime(&timeDetails);
-    return mTime != -1;
+    mTime = (hour << 12) | seconds;
+    return seconds < 3600;
   }
   else
   {
@@ -73,15 +68,9 @@ bool Time::fromString(const char* str)
 
 mStd::mString Time::toString() const
 {
-  struct tm timeDetails = { 0 };
-
-  localtime_s(&timeDetails, &mTime);
-
   char v[11 + 1];
-  sprintf_s(v, sizeof(v), "%02d:%02d:%02d",
-    timeDetails.tm_hour,
-    timeDetails.tm_min,
-    timeDetails.tm_sec);
+  sprintf_s(v, sizeof(v), "%02d:%04d",
+    (mTime >> 12), (mTime & 0xFFF));
   return mStd::mString(v);
 }
 

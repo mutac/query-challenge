@@ -26,6 +26,9 @@
     <ClInclude Include="..\..\src\datastore\Storage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\datastore\Database.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\datastore\FieldDescriptor.cpp">
@@ -35,6 +38,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\datastore\FieldType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\datastore\Database.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

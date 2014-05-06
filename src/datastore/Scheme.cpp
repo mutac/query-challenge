@@ -73,6 +73,7 @@ namespace DataStore
         std::string name;
         std::string description;
         TypeInfo type = DataStore::TypeInfo_Empty;
+        bool isKey = false;
         size_t size = 0;
 
         for (rapidjson::Value::ConstMemberIterator member = field->MemberBegin(); 
@@ -96,6 +97,10 @@ namespace DataStore
           {
             description = member->value.GetString();
           }
+          else if (memberName == "key")
+          {
+            isKey = member->value.GetBool();
+          }
           else
           {
             std::string ex("Invalid Scheme JSON: Unexpected member: ");
@@ -104,15 +109,9 @@ namespace DataStore
           }
         }
 
-        // Check required members
-        if (name.empty() || type == DataStore::TypeInfo_Empty)
-        {
-          throw std::exception("Invalid Scheme JSON: required field missing");
-        }
-
         std::shared_ptr<IFieldDescriptor> fieldDescriptor;
         fieldDescriptor = FieldDescriptorFactory::Create(type, name.c_str(), 
-          description.c_str(), size);
+          description.c_str(), isKey, size);
         if (!fieldDescriptor)
         {
           std::string ex("Error creating FieldDescriptor for ");
@@ -122,8 +121,16 @@ namespace DataStore
 
         mFields.push_back(fieldDescriptor);
       }
+
+      throwOnInvalidConstraints();
     }
 
+    const IScheme::IFieldDescriptors& getFieldDescriptors() const
+    {
+      return mFields;
+    }
+
+  private:
     /** Parse supported data types, return FieldType which corresponds */
     TypeInfo parseTypeName(const char* type)
     {
@@ -148,18 +155,42 @@ namespace DataStore
       {
         return "Unknown";
       }
-      
+
       return kTypeNames[(int)type];
     }
 
-    const IScheme::IFieldDescritors& getFieldDescriptors() const
+    /** Throw an exception if one of a few constrainst are not met */
+    void throwOnInvalidConstraints() const
     {
-      return mFields;
+      bool hasOneKey = false;
+
+      for (IScheme::IFieldDescriptors::const_iterator field = mFields.begin();
+        field != mFields.end(); ++field)
+      {
+        if (strlen((*field)->getName()) == 0)
+        {
+          throw std::exception("Unmet Scheme Constraints: 'name' member is required");
+        }
+        if ((*field)->getType() == DataStore::TypeInfo_Empty)
+        {
+          std::string ex("Unmet Scheme Constraints: Invalid 'type' in ");
+          ex += (*field)->getName();
+          throw std::exception();
+        }
+        if ((*field)->isKey())
+        {
+          hasOneKey = true;
+        }
+      }
+
+      if (!hasOneKey)
+      {
+        throw std::exception("Unmet Scheme Constraints: At least one field must be a 'key'");
+      }
     }
 
-  private:
     rapidjson::Document mScheme;
-    IScheme::IFieldDescritors mFields;
+    IScheme::IFieldDescriptors mFields;
   };
 }
 
@@ -179,14 +210,14 @@ SchemeJson::SchemeJson(const char* schemeJson)
 
 bool SchemeJson::validateHeader(const std::vector<std::string>& headerFieldNames) const
 {
-  const IFieldDescritors& fields = getFieldDescriptors();
+  const IFieldDescriptors& fields = getFieldDescriptors();
 
   if (fields.size() != headerFieldNames.size())
   {
     return false;
   }
 
-  IFieldDescritors::const_iterator field = fields.begin();
+  IFieldDescriptors::const_iterator field = fields.begin();
   std::vector<std::string>::const_iterator headerFieldName = headerFieldNames.cbegin();
 
   while (field != fields.end() && headerFieldName != headerFieldNames.cend())
@@ -203,7 +234,7 @@ bool SchemeJson::validateHeader(const std::vector<std::string>& headerFieldNames
   return true;
 }
 
-const IScheme::IFieldDescritors& SchemeJson::getFieldDescriptors() const
+const IScheme::IFieldDescriptors& SchemeJson::getFieldDescriptors() const
 {
   return mImpl->getFieldDescriptors();
 }

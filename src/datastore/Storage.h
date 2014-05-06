@@ -4,7 +4,9 @@
 
 namespace DataStore
 {
-
+  class IStorage
+  {
+  };
 }
 
 #endif

@@ -3,12 +3,14 @@
     "name": "STB",
     "type": "text",
     "size": 64,
+    "key": true,
     "description": "The set top box id on which the media asset was viewed"
   },
   {
     "name": "TITLE",
     "type": "text",
     "size": 64,
+    "key": true,
     "description": "The title of the media asset"
   },
   { 
@@ -20,6 +22,7 @@
   {
     "name": "DATE",
     "type": "date",
+    "key": true,
     "description": "The local date on which the content was leased by through the STB"
   },
   {

@@ -19,6 +19,7 @@ namespace DataStore
     virtual const char* getDescription() const = 0;
     virtual TypeInfo getType() const = 0;
     virtual size_t getSize() const = 0;
+    virtual bool isKey() const = 0;
 
     /** Create a new instance of a FieldValue by parsing a string, 
         NULL if parsing failed 
@@ -32,7 +33,7 @@ namespace DataStore
   {
   public:
     static std::shared_ptr<IFieldDescriptor> Create(TypeInfo type,
-    const char* name, const char* description, size_t size);
+    const char* name, const char* description, bool isKey, size_t size);
 
   private:
     FieldDescriptorFactory();
@@ -63,10 +64,16 @@ namespace DataStore
       return mSize;
     }
 
+    virtual bool isKey() const
+    {
+      return mIsKey;
+    }
+
   protected:
     FieldDescriptorBase(TypeInfo type, const char* name,
-      const char* description, size_t size = 0) :
-      mType(type), mName(name), mDescrition(description), mSize(size)
+      const char* description, bool isKey, size_t size = 0) :
+        mType(type), mName(name), mDescrition(description),
+        mIsKey(isKey), mSize(size)
     {
     }
   
@@ -75,6 +82,7 @@ namespace DataStore
     std::string mDescrition;
     TypeInfo mType;
     size_t mSize;
+    bool mIsKey;
   };
 
   /**
@@ -82,8 +90,9 @@ namespace DataStore
   class TextFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    TextFieldDescriptor(const char* name, const char* description, size_t size) :
-      FieldDescriptorBase(TypeInfo_String, name, description, size)
+    TextFieldDescriptor(const char* name, 
+      const char* description, bool isKey, size_t size) :
+        FieldDescriptorBase(TypeInfo_String, name, description, isKey, size)
     {
     }
 
@@ -95,8 +104,8 @@ namespace DataStore
   class DateFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    DateFieldDescriptor(const char* name, const char* description) :
-      FieldDescriptorBase(TypeInfo_Date, name, description, 0)
+    DateFieldDescriptor(const char* name, const char* description, bool isKey) :
+      FieldDescriptorBase(TypeInfo_Date, name, description, isKey, 0)
     {
     }
 
@@ -108,8 +117,8 @@ namespace DataStore
   class TimeFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    TimeFieldDescriptor(const char* name, const char* description) :
-      FieldDescriptorBase(TypeInfo_Time, name, description, 0)
+    TimeFieldDescriptor(const char* name, const char* description, bool isKey) :
+      FieldDescriptorBase(TypeInfo_Time, name, description, isKey, 0)
     {
     }
 
@@ -121,8 +130,9 @@ namespace DataStore
   class FloatFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    FloatFieldDescriptor(const char* name, const char* description, size_t size) :
-      FieldDescriptorBase(TypeInfo_Float, name, description, size)
+    FloatFieldDescriptor(const char* name, 
+      const char* description, bool isKey, size_t size) :
+      FieldDescriptorBase(TypeInfo_Float, name, description, isKey, size)
     {
     }
 

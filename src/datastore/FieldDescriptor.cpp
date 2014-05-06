@@ -24,10 +24,6 @@ std::shared_ptr<IFieldValue> DateFieldDescriptor::fromString(const char* str) co
 
 std::shared_ptr<IFieldValue> TimeFieldDescriptor::fromString(const char* str) const
 {
-  // 
-  // Assume that encoding is plain text:
-  //
-
   DataStore::Time time;
   if (time.fromString(str))
   {
@@ -53,16 +49,16 @@ std::shared_ptr<IFieldValue> FloatFieldDescriptor::fromString(const char* str) c
 }
 
 std::shared_ptr<IFieldDescriptor> FieldDescriptorFactory::Create(TypeInfo type,
-  const char* name, const char* description, size_t size)
+  const char* name, const char* description, bool isKey, size_t size)
 {
   if (type == TypeInfo_String)
-    return std::shared_ptr<IFieldDescriptor>(new TextFieldDescriptor(name, description, size));
+    return std::shared_ptr<IFieldDescriptor>(new TextFieldDescriptor(name, description, isKey, size));
   else if (type == TypeInfo_Date)
-    return std::shared_ptr<IFieldDescriptor>(new DateFieldDescriptor(name, description));
+    return std::shared_ptr<IFieldDescriptor>(new DateFieldDescriptor(name, description, isKey));
   else if (type == TypeInfo_Time)
-    return std::shared_ptr<IFieldDescriptor>(new TimeFieldDescriptor(name, description));
+    return std::shared_ptr<IFieldDescriptor>(new TimeFieldDescriptor(name, description, isKey));
   else if (type == TypeInfo_Float)
-    return std::shared_ptr<IFieldDescriptor>(new FloatFieldDescriptor(name, description, size));
+    return std::shared_ptr<IFieldDescriptor>(new FloatFieldDescriptor(name, description, isKey, size));
   else
     return NULL;
 }

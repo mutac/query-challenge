@@ -15,13 +15,13 @@ namespace DataStore
   */
   struct IScheme
   {
-    typedef std::vector<std::shared_ptr<IFieldDescriptor> > IFieldDescritors;
+    typedef std::vector<std::shared_ptr<IFieldDescriptor> > IFieldDescriptors;
 
     /** Returns true if header field names match scheme */
-    bool validateHeader(const std::vector<std::string>& headerFieldNames) const;
+    virtual bool validateHeader(const std::vector<std::string>& headerFieldNames) const = 0;
 
     /** Return fields of scheme */
-    const IFieldDescritors& getFieldDescriptors() const;
+    virtual const IFieldDescriptors& getFieldDescriptors() const = 0;
   };
 
   /**
@@ -34,6 +34,7 @@ namespace DataStore
     "name": "STB",
     "type": "text",
     "size": 64,
+    "key": true,
     "description": "The set top box id on which the media asset was viewed"
     },
     {
@@ -79,7 +80,7 @@ namespace DataStore
     bool validateHeader(const std::vector<std::string>& headerFieldNames) const;
 
     /** Return fields of scheme */
-    const IFieldDescritors& getFieldDescriptors() const;
+    const IFieldDescriptors& getFieldDescriptors() const;
 
   private:
     std::shared_ptr<SchemeJsonImpl> mImpl;

@@ -7,12 +7,11 @@
 #include <fstream>
 #include <exception>
 #include <tclap/CmdLine.h>
-#include <datastore/FieldValue.h>
-#include <datastore/Scheme.h>
+#include <datastore/Database.h>
 
 static const char kFieldDelimiter = '|';
 
-bool getValues(const std::string& row, std::vector<std::string>* outFields)
+bool getStringValues(const std::string& row, std::vector<std::string>* outFields)
 {
   outFields->clear();
 
@@ -56,8 +55,9 @@ int main(int argc, char** argv)
     // describe how to parse the input rows.
     //
 
-    DataStore::SchemeJson scheme(schemeFile);
-    DataStore::IScheme::IFieldDescritors fieldDescriptors = scheme.getFieldDescriptors();
+    std::shared_ptr<DataStore::IScheme> scheme(new DataStore::SchemeJson(schemeFile));
+    DataStore::IScheme::IFieldDescriptors fieldDescriptors = scheme->getFieldDescriptors();
+    DataStore::Database database(scheme);
 
     //
     // Read records from input, parse, and validate that they match scheme
@@ -70,8 +70,8 @@ int main(int argc, char** argv)
     line++;
 
     std::vector<std::string> headerFieldNames;
-    getValues(header, &headerFieldNames);
-    if (!scheme.validateHeader(headerFieldNames))
+    getStringValues(header, &headerFieldNames);
+    if (!scheme->validateHeader(headerFieldNames))
     {
       throw std::exception("Header does not match scheme");
     }
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
       if (row.size() > 0)
       {
         std::vector<std::string> values;
-        getValues(row, &values);
+        getStringValues(row, &values);
 
         // Make sure that the row has the right number of fields
         if (values.size() != fieldDescriptors.size())
@@ -92,28 +92,40 @@ int main(int argc, char** argv)
           throw std::exception(str.c_str());
         }
 
+        DataStore::Database::IFieldValues rowValues;
+
         // Parse each value in row.  Iterators and smart pointers... blech
         
-        DataStore::IScheme::IFieldDescritors::const_iterator fieldDesriptor = 
+        DataStore::IScheme::IFieldDescriptors::const_iterator fieldDescriptor = 
           fieldDescriptors.cbegin();
         std::vector<std::string>::const_iterator value = values.cbegin();
 
-        while (value != values.cend() && fieldDesriptor != fieldDescriptors.cend())
+        while (value != values.cend() && fieldDescriptor != fieldDescriptors.cend())
         {
           std::shared_ptr<DataStore::IFieldValue> fieldValue = 
-            (*fieldDesriptor)->fromString(value->c_str());
+            (*fieldDescriptor)->fromString(value->c_str());
  
           if (!fieldValue)
           {
             std::stringstream ex;
-            ex << "Malformed value in Field: \"" << (*fieldDesriptor)->getName() <<
-              "\" : \"" << *value << "\", at line " << line;
+            ex << "Malformed value in Field: \"" << (*fieldDescriptor)->getName() 
+              << "\" : \"" << *value << "\", at line " << line;
             std::string str = ex.str();
             throw std::exception(str.c_str());
           }
 
+          rowValues.push_back(fieldValue);
+
           ++value;
-          ++fieldDesriptor;
+          ++fieldDescriptor;
+        }
+
+        if (!database.insert(rowValues))
+        {
+          std::stringstream ex;
+          ex << "Error inserting row at line " << line;
+          std::string str = ex.str();
+          throw std::exception(str.c_str());
         }
 
         ++line;
@@ -123,10 +135,12 @@ int main(int argc, char** argv)
   catch (TCLAP::ArgException &e)
   {
     std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl;
+    return 1;
   }
   catch (std::exception& ex)
   {
     std::cerr << "error: " << ex.what() << std::endl;
+    return 1;
   }
 
 	return 0;

@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\datastore\Database.h" />
     <ClInclude Include="..\..\src\datastore\FieldDescriptor.h" />
     <ClInclude Include="..\..\src\datastore\FieldType.h" />
     <ClInclude Include="..\..\src\datastore\FieldValue.h" />
@@ -18,6 +19,7 @@
     <ClInclude Include="..\..\src\datastore\Storage.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\datastore\Database.cpp" />
     <ClCompile Include="..\..\src\datastore\FieldDescriptor.cpp" />
     <ClCompile Include="..\..\src\datastore\FieldType.cpp" />
     <ClCompile Include="..\..\src\datastore\Scheme.cpp" />

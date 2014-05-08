@@ -38,6 +38,15 @@ namespace DataStore
     bool fromString(const char* str);
     mStd::mString toString() const;
 
+    bool operator==(const Date& other) const
+    {
+      return other.mDate == mDate;
+    }
+    bool operator!=(const Date& other) const
+    {
+      return other.mDate != mDate;
+    }
+
   private:
     // Could use smaller type
     time_t mDate;
@@ -56,6 +65,15 @@ namespace DataStore
 
     bool fromString(const char* str);
     mStd::mString toString() const;
+
+    const bool operator==(const Time& other) const
+    {
+      return other.mTime == mTime;
+    }
+    const bool operator!=(const Time& other) const
+    {
+      return other.mTime != mTime;
+    }
 
   private:
     uint32_t mTime;

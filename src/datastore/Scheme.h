@@ -5,6 +5,7 @@
 #define __SCHEME_H__
 
 #include <datastore/FieldDescriptor.h>
+#include <datastore/FieldValue.h>
 #include <memory>
 #include <vector>
 
@@ -15,13 +16,17 @@ namespace DataStore
   */
   struct IScheme
   {
-    typedef std::vector<std::shared_ptr<IFieldDescriptor> > IFieldDescriptors;
-
     /** Returns true if header field names match scheme */
-    virtual bool validateHeader(const std::vector<std::string>& headerFieldNames) const = 0;
+    virtual bool allFieldsPresent(const std::vector<std::string>& headerFieldNames) const = 0;
+    
+    /** Returns true if values comprises the complete set of type-correct values */
+    virtual bool allFieldsPresent(const FieldValues& values) const = 0;
 
     /** Return fields of scheme */
     virtual const IFieldDescriptors& getFieldDescriptors() const = 0;
+
+    /** Return only the key fields */
+    virtual const IFieldDescriptors& getKeyFieldDescriptors() const = 0;
   };
 
   /**
@@ -76,11 +81,11 @@ namespace DataStore
     /** JSON scheme descriptor json text */
     SchemeJson(const char* schemeJson);
 
-    /** Returns true if header field names match scheme */
-    bool validateHeader(const std::vector<std::string>& headerFieldNames) const;
+    bool allFieldsPresent(const std::vector<std::string>& fieldNames) const;
+    bool allFieldsPresent(const FieldValues& values) const;
 
-    /** Return fields of scheme */
     const IFieldDescriptors& getFieldDescriptors() const;
+    const IFieldDescriptors& getKeyFieldDescriptors() const;
 
   private:
     std::shared_ptr<SchemeJsonImpl> mImpl;

@@ -45,6 +45,7 @@ namespace DataStore
     void setScheme()
     {
       mFields.clear();
+      mKeyFields.clear();
 
       if (!mScheme.IsArray())
       {
@@ -114,9 +115,14 @@ namespace DataStore
           description.c_str(), isKey, size);
         if (!fieldDescriptor)
         {
-          std::string ex("Error creating FieldDescriptor for ");
+          std::string ex("Internal error creating FieldDescriptor for ");
           ex += name;
           throw std::exception(ex.c_str());
+        }
+
+        if (fieldDescriptor->isKey())
+        {
+          mKeyFields.push_back(fieldDescriptor);
         }
 
         mFields.push_back(fieldDescriptor);
@@ -125,9 +131,14 @@ namespace DataStore
       throwOnInvalidConstraints();
     }
 
-    const IScheme::IFieldDescriptors& getFieldDescriptors() const
+    const IFieldDescriptors& getFieldDescriptors() const
     {
       return mFields;
+    }
+
+    const IFieldDescriptors& getKeyFieldDescriptors() const
+    {
+      return mKeyFields;
     }
 
   private:
@@ -164,7 +175,7 @@ namespace DataStore
     {
       bool hasOneKey = false;
 
-      for (IScheme::IFieldDescriptors::const_iterator field = mFields.begin();
+      for (IFieldDescriptors::const_iterator field = mFields.begin();
         field != mFields.end(); ++field)
       {
         if (strlen((*field)->getName()) == 0)
@@ -181,6 +192,8 @@ namespace DataStore
         {
           hasOneKey = true;
         }
+
+        // Names should be unique too probably...
       }
 
       if (!hasOneKey)
@@ -190,7 +203,8 @@ namespace DataStore
     }
 
     rapidjson::Document mScheme;
-    IScheme::IFieldDescriptors mFields;
+    IFieldDescriptors mFields;
+    IFieldDescriptors mKeyFields;
   };
 }
 
@@ -208,7 +222,7 @@ SchemeJson::SchemeJson(const char* schemeJson)
 {
 }
 
-bool SchemeJson::validateHeader(const std::vector<std::string>& headerFieldNames) const
+bool SchemeJson::allFieldsPresent(const std::vector<std::string>& headerFieldNames) const
 {
   const IFieldDescriptors& fields = getFieldDescriptors();
 
@@ -234,7 +248,19 @@ bool SchemeJson::validateHeader(const std::vector<std::string>& headerFieldNames
   return true;
 }
 
-const IScheme::IFieldDescriptors& SchemeJson::getFieldDescriptors() const
+bool SchemeJson::allFieldsPresent(const DataStore::FieldValues& fieldValues) const
+{
+  // Does not currently check types...
+  IFieldDescriptors fields = getFieldDescriptors();
+  return fields.size() == fieldValues.size();
+}
+
+const IFieldDescriptors& SchemeJson::getFieldDescriptors() const
 {
   return mImpl->getFieldDescriptors();
+}
+
+const IFieldDescriptors& SchemeJson::getKeyFieldDescriptors() const
+{
+  return mImpl->getKeyFieldDescriptors();
 }

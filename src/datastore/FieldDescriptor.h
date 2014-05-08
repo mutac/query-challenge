@@ -2,15 +2,14 @@
 #ifndef __FIELD_DESCRIPTOR_H__
 #define __FIELD_DESCRIPTOR_H__
 
-#include <datastore/FieldValue.h>
+#include <datastore/Value.h>
 #include <datastore/FieldType.h>
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace DataStore
 {
-
-
   /**
   */
   struct IFieldDescriptor
@@ -21,11 +20,22 @@ namespace DataStore
     virtual size_t getSize() const = 0;
     virtual bool isKey() const = 0;
 
-    /** Create a new instance of a FieldValue by parsing a string, 
+    virtual bool operator==(const IFieldDescriptor& other) const = 0;
+
+    inline bool operator!=(const IFieldDescriptor& other) const
+    {
+      return !(*this == other);
+    }
+
+    /** Create a new instance of a Value by parsing a string, 
         NULL if parsing failed 
      */
-    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const = 0;
+    virtual std::shared_ptr<Value> fromString(const char* str) const = 0;
   };
+
+  /**
+  */
+  typedef std::vector<std::shared_ptr<IFieldDescriptor> > IFieldDescriptors;
 
   /**
   */
@@ -69,6 +79,14 @@ namespace DataStore
       return mIsKey;
     }
 
+    virtual bool operator==(const IFieldDescriptor& other) const
+    {
+      return mType == other.getType() &&
+        mName == other.getName() &&
+        mSize == other.getSize() &&
+        mIsKey == other.isKey();
+    }
+
   protected:
     FieldDescriptorBase(TypeInfo type, const char* name,
       const char* description, bool isKey, size_t size = 0) :
@@ -96,7 +114,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
+    virtual std::shared_ptr<Value> fromString(const char* str) const;
   };
 
   /**
@@ -109,7 +127,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
+    virtual std::shared_ptr<Value> fromString(const char* str) const;
   };
 
   /**
@@ -122,7 +140,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
+    virtual std::shared_ptr<Value> fromString(const char* str) const;
   };
 
   /**
@@ -136,7 +154,7 @@ namespace DataStore
     {
     }
 
-    virtual std::shared_ptr<IFieldValue> fromString(const char* str) const;
+    virtual std::shared_ptr<Value> fromString(const char* str) const;
   };
 }
 

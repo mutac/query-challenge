@@ -17,6 +17,7 @@ namespace Tests
         "    \"name\": \"field1\",  "
         "    \"type\": \"text\",    "
         "    \"size\": 128,         "
+        "    \"key\": true,         "
         "    \"description\": \"This is a single field\" "
         "  }                        "
         "]                          ";
@@ -25,7 +26,7 @@ namespace Tests
       {
         DataStore::SchemeJson scheme(schemeJson);
         
-        const DataStore::IScheme::IFieldDescriptors& fields = scheme.getFieldDescriptors();
+        const DataStore::IFieldDescriptors& fields = scheme.getFieldDescriptors();
         Assert::AreEqual((size_t)1, fields.size());
 
         DataStore::IFieldDescriptor* oneField = fields.begin()->get();
@@ -64,6 +65,7 @@ namespace Tests
         "    \"name\": \"textField\",   "
         "    \"type\": \"text\",        "
         "    \"size\": 128,             "
+        "    \"key\": true,             "
         "    \"description\": \"This is a text field\" "
         "  },                           "
         "  {                            "
@@ -87,11 +89,11 @@ namespace Tests
       try
       {
         DataStore::SchemeJson scheme(schemeJson);
-        const DataStore::IScheme::IFieldDescriptors fields = scheme.getFieldDescriptors();
+        const DataStore::IFieldDescriptors fields = scheme.getFieldDescriptors();
 
         Assert::AreEqual((size_t)4, fields.size());
 
-        DataStore::IScheme::IFieldDescriptors::const_iterator field = fields.begin();
+        DataStore::IFieldDescriptors::const_iterator field = fields.begin();
         Assert::AreEqual(DataStore::TypeInfo_String, (*field)->getType());
         ++field;
         Assert::AreEqual(DataStore::TypeInfo_Float, (*field)->getType());

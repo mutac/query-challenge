@@ -1,43 +1,44 @@
 
-#ifndef __IFieldValue_H__
-#define __IFieldValue_H__
+#ifndef __FieldValue_H__
+#define __FieldValue_H__
 
-#include <resource/Variant.h>
+#include <datastore/Value.h>
+#include <datastore/FieldDescriptor.h>
+#include <vector>
 
 namespace DataStore
 {
   /**
   */
-  struct IFieldValue
-  {
-    virtual const mStd::Variant& getValue() const = 0;
-  };
-
-  /**
-  */
-  class FieldValue : public IFieldValue
+  class FieldValue
   {
   public:
-    FieldValue(const mStd::Variant& v) :
-      mValue(v)
+    FieldValue(std::shared_ptr<IFieldDescriptor> fieldDescriptor,
+      std::shared_ptr<Value> value) :
+        mValue(value), mFieldDescriptor(fieldDescriptor)
     {
+      mAssert(value);
+      mAssert(fieldDescriptor);
     }
 
-    /** Short-cut:  Variant must be assinable to T */
-    template<typename T>
-    FieldValue(const T& v) :
-      mValue(v)
-    {
-    }
-
-    const mStd::Variant& getValue() const
+    const std::shared_ptr<Value> getValue() const
     {
       return mValue;
     }
 
+    const std::shared_ptr<IFieldDescriptor> getFieldDescriptor() const
+    {
+      return mFieldDescriptor;
+    }
+
   private:
-    mStd::Variant mValue;
+    std::shared_ptr<Value> mValue;
+    std::shared_ptr<IFieldDescriptor> mFieldDescriptor;
   };
+
+  /**
+  */
+  typedef std::vector<FieldValue> FieldValues;
 }
 
 #endif

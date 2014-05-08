@@ -56,8 +56,9 @@ int main(int argc, char** argv)
     //
 
     std::shared_ptr<DataStore::IScheme> scheme(new DataStore::SchemeJson(schemeFile));
-    DataStore::IScheme::IFieldDescriptors fieldDescriptors = scheme->getFieldDescriptors();
     DataStore::Database database(scheme);
+
+    DataStore::IFieldDescriptors fieldDescriptors = scheme->getFieldDescriptors();
 
     //
     // Read records from input, parse, and validate that they match scheme
@@ -71,7 +72,7 @@ int main(int argc, char** argv)
 
     std::vector<std::string> headerFieldNames;
     getStringValues(header, &headerFieldNames);
-    if (!scheme->validateHeader(headerFieldNames))
+    if (!scheme->allFieldsPresent(headerFieldNames))
     {
       throw std::exception("Header does not match scheme");
     }
@@ -80,11 +81,11 @@ int main(int argc, char** argv)
     {
       if (row.size() > 0)
       {
-        std::vector<std::string> values;
-        getStringValues(row, &values);
+        std::vector<std::string> stringValues;
+        getStringValues(row, &stringValues);
 
         // Make sure that the row has the right number of fields
-        if (values.size() != fieldDescriptors.size())
+        if (stringValues.size() != fieldDescriptors.size())
         {
           std::stringstream ex;
           ex << "Row is missing a field, at line: " << line;
@@ -92,35 +93,35 @@ int main(int argc, char** argv)
           throw std::exception(str.c_str());
         }
 
-        DataStore::Database::IFieldValues rowValues;
-
-        // Parse each value in row.  Iterators and smart pointers... blech
+        // Parse each value in row.
+        DataStore::FieldValues fieldValues;
         
-        DataStore::IScheme::IFieldDescriptors::const_iterator fieldDescriptor = 
+        DataStore::IFieldDescriptors::const_iterator fieldDescriptor = 
           fieldDescriptors.cbegin();
-        std::vector<std::string>::const_iterator value = values.cbegin();
+        std::vector<std::string>::const_iterator stringValue = stringValues.cbegin();
 
-        while (value != values.cend() && fieldDescriptor != fieldDescriptors.cend())
+        while (stringValue != stringValues.cend() && fieldDescriptor != fieldDescriptors.cend())
         {
-          std::shared_ptr<DataStore::IFieldValue> fieldValue = 
-            (*fieldDescriptor)->fromString(value->c_str());
+          std::shared_ptr<DataStore::Value> value = 
+            (*fieldDescriptor)->fromString(stringValue->c_str());
  
-          if (!fieldValue)
+          if (!value)
           {
             std::stringstream ex;
-            ex << "Malformed value in Field: \"" << (*fieldDescriptor)->getName() 
-              << "\" : \"" << *value << "\", at line " << line;
+            ex << "Malformed value in field \"" << (*fieldDescriptor)->getName() 
+              << "\" : \"" << *stringValue << "\", at line " << line;
             std::string str = ex.str();
             throw std::exception(str.c_str());
           }
 
-          rowValues.push_back(fieldValue);
+          fieldValues.push_back(
+            DataStore::FieldValue(*fieldDescriptor, value));
 
-          ++value;
+          ++stringValue;
           ++fieldDescriptor;
         }
 
-        if (!database.insert(rowValues))
+        if (!database.insert(fieldValues))
         {
           std::stringstream ex;
           ex << "Error inserting row at line " << line;

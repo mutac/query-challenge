@@ -11,6 +11,11 @@ namespace DataStore
   class DatabaseInMemory;
   typedef PointerType<DatabaseInMemory>::Shared DatabaseInMemoryPtrH;
 
+  class DatabaseOnDiskMemory;
+  typedef PointerType<DatabaseOnDiskMemory>::Shared DatabaseOnDiskMemoryPtrH;
+
+  /**
+  */
   struct IRow
   {
     virtual ValueConstPtrH getValue(const IFieldDescriptor& field) const = 0;
@@ -26,8 +31,6 @@ namespace DataStore
   typedef PointerType<IRow>::Shared IRowPtrH;
   typedef PointerType<IRow>::SharedConst IRowConstPtrH;
 
-
-
   /**
   */
   class Database
@@ -42,6 +45,7 @@ namespace DataStore
   private:
     ISchemePtrH mScheme;
     DatabaseInMemoryPtrH mMemory;
+    DatabaseOnDiskMemoryPtrH mDisk;
     IFieldDescriptorConstListConstPtrH mFields;
   };
 }

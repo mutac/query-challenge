@@ -158,8 +158,6 @@ namespace DataStore
       IFieldDescriptorConstListConstPtrH mSelectedFields;
     };
 
-
-
     DatabaseInMemory()
     {
     }
@@ -201,6 +199,12 @@ namespace DataStore
 
   private:
     std::vector<IRowConstPtrH> mRows;
+  };
+
+  /**
+  */
+  class DatabaseOnDiskMemory
+  {
   };
 }
 

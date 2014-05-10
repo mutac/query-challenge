@@ -12,6 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\datastore\tests\TestScheme.cpp" />
+    <ClCompile Include="TestDatabase.cpp" />
     <ClCompile Include="TestDate.cpp" />
     <ClCompile Include="TestTime.cpp" />
   </ItemGroup>

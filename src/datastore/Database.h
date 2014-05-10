@@ -26,6 +26,8 @@ namespace DataStore
   typedef PointerType<IRow>::Shared IRowPtrH;
   typedef PointerType<IRow>::SharedConst IRowConstPtrH;
 
+
+
   /**
   */
   class Database
@@ -35,7 +37,7 @@ namespace DataStore
 
     IRowPtrH createRow() const;
 
-    bool insert(IRowPtrH row);
+    bool insert(IRowConstPtrH row);
 
   private:
     ISchemePtrH mScheme;

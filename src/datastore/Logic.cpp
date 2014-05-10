@@ -22,7 +22,7 @@ void Predicate::compile()
 
 bool Predicate::matches(const IRow& row) const
 {
-  return false;
+  return mRoot->matches(row);
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -33,9 +33,16 @@ void Logic::And::with(IQualifierPtrH qualifier)
   mQualifiers.push_back(qualifier);
 }
 
-bool Logic::And::matches(const IRow& value) const
+bool Logic::And::matches(const IRow& row) const
 {
-  return false;
+  for (IQualifierList::const_iterator qual = mQualifiers.cbegin();
+    qual != mQualifiers.cend(); ++qual)
+  {
+    if (!(*qual)->matches(row))
+      return false;
+  }
+
+  return true;
 }
 
 void Logic::And::getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const
@@ -52,7 +59,15 @@ void Logic::And::getFieldDescriptors(IFieldDescriptorConstList* outFieldDescript
 
 bool Logic::Exact::matches(const IRow& row) const
 {
-  return false;
+  ValueConstPtrH value = row.getValue(*mExpectedField);
+  if (value)
+  {
+    return *value == *mExpectedValue;
+  }
+  else
+  {
+    return false;
+  }
 }
 
 void Logic::Exact::getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const

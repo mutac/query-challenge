@@ -113,8 +113,10 @@ namespace DataStore
     class RowSelection : public IRow
     {
     public:
-      RowSelection() :
-        mSelectedFields(new IFieldDescriptorConstList())
+      RowSelection(IFieldDescriptorConstListConstPtrH selectedFields, 
+        IRowConstPtrH row) :
+        mSelectedFields(selectedFields),
+        mRow(row)
       {
       }
 
@@ -152,8 +154,8 @@ namespace DataStore
         return false;
       }
 
-      std::shared_ptr<IRow> mRow;
-      IFieldDescriptorConstListPtrH mSelectedFields;
+      IRowConstPtrH mRow;
+      IFieldDescriptorConstListConstPtrH mSelectedFields;
     };
 
 
@@ -167,7 +169,7 @@ namespace DataStore
       // TODO: Fix RowIdentifier.. too weird
       for (RowIdentifier::IdType id = 0; id < mRows.size(); ++id)
       {
-        if (pred.matches(mRows[id]))
+        if (pred.matches(*mRows[id]))
         {
           return RowIdentifier(id);
         }
@@ -178,7 +180,7 @@ namespace DataStore
       return RowIdentifier::Empty();
     }
 
-    bool replace(const RowIdentifier& id, const Row& row)
+    bool replace(const RowIdentifier& id, IRowConstPtrH row)
     {
       if (id.getId() < mRows.size())
       {
@@ -191,67 +193,62 @@ namespace DataStore
       }
     }
 
-    bool insert(const Row& row)
+    bool insert(IRowConstPtrH row)
     {
       mRows.push_back(row);
       return true;
     }
 
   private:
-    std::vector<Row> mRows;
+    std::vector<IRowConstPtrH> mRows;
   };
 }
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-Database::Database(std::shared_ptr<IScheme> scheme) :
+Database::Database(ISchemePtrH scheme) :
   mScheme(scheme),
   mMemory(new DatabaseInMemory())
 {
   mFields = mScheme->getFieldDescriptors();
 }
 
-std::shared_ptr<IRow> Database::createRow() const
+IRowPtrH Database::createRow() const
 {
-  std::shared_ptr<IRow> newRow(new DatabaseInMemory::Row(mFields));
+  IRowPtrH newRow(new DatabaseInMemory::Row(mFields));
   return newRow;
 }
 
-bool Database::insert(std::shared_ptr<IRow> row)
+bool Database::insert(IRowConstPtrH row)
 {  
 
-  /*
-
   //
-  // From the row, select only the key fields
+  // Select only the key fields
   //
 
-  FieldValues keyValues;
-  Selection::SelectFields(mScheme->getKeyFieldDescriptors(), 
-    row, &keyValues);
-  if (keyValues.empty())
-  {
-    return false;
-  }
+  IFieldDescriptorConstListConstPtrH keyFields = mScheme->getKeyFieldDescriptors();
+  IRowPtrH keyValues(new DatabaseInMemory::RowSelection(keyFields, row));
 
   //
   // Create constraint that will match iff all key fields are exact
   //
 
   Logic::And* and = new Logic::And();
-  for (FieldValues::const_iterator key = keyValues.cbegin(); 
-    key != keyValues.cend(); ++key)
+  for (IFieldDescriptorConstList::const_iterator keyField = keyFields->cbegin();
+    keyField != keyFields->cend(); ++keyField)
   {
-    std::shared_ptr<IQualifier> exactKey(new Logic::Exact(*key));
-    and->with(exactKey);
+    IFieldDescriptorConstPtrH field = *keyField;
+
+    IQualifierPtrH exactKeyValue(new Logic::Exact(field, keyValues->getValue(*field)));
+    and->with(exactKeyValue);
   }
 
-  std::shared_ptr<IQualifier> exactKeys(and);
-  Predicate uniqueByKey(exactKeys);
+  IQualifierPtrH exactKeys(and);
+  Predicate matchExactKeys(exactKeys);
 
-  RowIdentifier found = mMemory->lookupRow(uniqueByKey);
-  if (found.empty())
+  RowIdentifier found = mMemory->lookupRow(matchExactKeys);
+  if (!found.empty())
   {
     return mMemory->replace(found, row);
   }
@@ -259,9 +256,6 @@ bool Database::insert(std::shared_ptr<IRow> row)
   {
     return mMemory->insert(row);
   }
-  */
-
-  return false;
 }
 
 

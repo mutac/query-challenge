@@ -55,9 +55,8 @@ int main(int argc, char** argv)
     // describe how to parse the input rows.
     //
 
-    std::shared_ptr<DataStore::IScheme> scheme(new DataStore::SchemeJson(schemeFile));
+    DataStore::ISchemePtrH scheme(new DataStore::SchemeJson(schemeFile));
     DataStore::Database database(scheme);
-
     DataStore::IFieldDescriptorConstListConstPtrH fieldDescriptors = scheme->getFieldDescriptors();
 
     //
@@ -95,7 +94,7 @@ int main(int argc, char** argv)
 
         // Parse each value in row.
 
-        std::shared_ptr<DataStore::IRow> row = database.createRow();
+        DataStore::IRowPtrH row = database.createRow();
         
         DataStore::IFieldDescriptorConstList::const_iterator fieldDescriptor = 
           fieldDescriptors->cbegin();

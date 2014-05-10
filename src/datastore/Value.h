@@ -28,6 +28,11 @@ namespace DataStore
       return mValue;
     }
 
+    bool operator==(const Value& other) const
+    {
+      return mValue == other.mValue;
+    }
+
   private:
     mStd::Variant mValue;
   };

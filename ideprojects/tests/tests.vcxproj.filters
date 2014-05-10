@@ -19,5 +19,8 @@
     <ClCompile Include="TestTime.cpp">
       <Filter>Source Files\DataStoreTests</Filter>
     </ClCompile>
+    <ClCompile Include="TestDatabase.cpp">
+      <Filter>Source Files\DataStoreTests</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -68,7 +68,7 @@ namespace DataStore
         mFields(fields)
       {
         // Reserve space for a complete row.
-        mRow.reserve(fields->size());
+        mRow.resize(fields->size());
       }
 
       ValueConstPtrH getValue(const IFieldDescriptor& field) const

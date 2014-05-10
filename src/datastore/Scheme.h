@@ -5,8 +5,7 @@
 #define __SCHEME_H__
 
 #include <datastore/FieldDescriptor.h>
-#include <datastore/FieldValue.h>
-#include <memory>
+#include <datastore/PointerType.h>
 #include <vector>
 
 namespace DataStore
@@ -20,14 +19,17 @@ namespace DataStore
     virtual bool allFieldsPresent(const std::vector<std::string>& headerFieldNames) const = 0;
     
     /** Returns true if values comprises the complete set of type-correct values */
-    virtual bool allFieldsPresent(const FieldValues& values) const = 0;
+    virtual bool allFieldsPresent(const IFieldDescriptorList& fields) const = 0;
 
     /** Return fields of scheme */
-    virtual const IFieldDescriptors& getFieldDescriptors() const = 0;
+    virtual IFieldDescriptorConstListConstPtrH getFieldDescriptors() const = 0;
 
     /** Return only the key fields */
-    virtual const IFieldDescriptors& getKeyFieldDescriptors() const = 0;
+    virtual IFieldDescriptorConstListConstPtrH getKeyFieldDescriptors() const = 0;
   };
+
+  typedef PointerType<IScheme>::Shared ISchemePtrH;
+  typedef PointerType<IScheme>::SharedConst ISchemeConstPtrH;
 
   /**
     IScheme implementation, reads from a JSON scheme encoding
@@ -82,10 +84,10 @@ namespace DataStore
     SchemeJson(const char* schemeJson);
 
     bool allFieldsPresent(const std::vector<std::string>& fieldNames) const;
-    bool allFieldsPresent(const FieldValues& values) const;
+    bool allFieldsPresent(const IFieldDescriptorList& fields) const;
 
-    const IFieldDescriptors& getFieldDescriptors() const;
-    const IFieldDescriptors& getKeyFieldDescriptors() const;
+    IFieldDescriptorConstListConstPtrH getFieldDescriptors() const;
+    IFieldDescriptorConstListConstPtrH getKeyFieldDescriptors() const;
 
   private:
     std::shared_ptr<SchemeJsonImpl> mImpl;

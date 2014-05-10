@@ -6,38 +6,56 @@ using namespace DataStore;
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-bool Predicate::matches(const FieldValue& values) const
+Predicate::Predicate(IQualifierPtrH qualifierRoot) :
+  mSearchFields(new IFieldDescriptorConstList()),
+  mRoot(qualifierRoot)
 {
-  return mRoot->matches(values);
+  compile();
+}
+
+void Predicate::compile()
+{
+  // Collect the fields that need to be searched
+  mSearchFields->clear();
+  mRoot->getFieldDescriptors(mSearchFields.get());
+}
+
+bool Predicate::matches(const IRow& row) const
+{
+  return false;
 }
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-void Logic::And::with(std::shared_ptr<IQualifier> qualifier)
+void Logic::And::with(IQualifierPtrH qualifier)
 {
   mQualifiers.push_back(qualifier);
 }
 
-bool Logic::And::matches(const FieldValue& value) const
+bool Logic::And::matches(const IRow& value) const
 {
-  bool match = false;
-  for (IQualifiers::const_iterator qual = mQualifiers.cbegin();
+  return false;
+}
+
+void Logic::And::getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const
+{
+  for (IQualifierList::const_iterator qual = mQualifiers.cbegin();
     qual != mQualifiers.cend(); ++qual)
   {
-    if (!(*qual)->matches(value))
-    {
-      return false;
-    }
+    (*qual)->getFieldDescriptors(outFieldDescriptors);
   }
-
-  return true;
 }
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-bool Logic::Exact::matches(const FieldValue& field) const
+bool Logic::Exact::matches(const IRow& row) const
 {
   return false;
+}
+
+void Logic::Exact::getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const
+{
+  outFieldDescriptors->push_back(mExpectedField);
 }

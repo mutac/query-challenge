@@ -3,26 +3,44 @@
 #define __DATABASE_H__
 
 #include <datastore/Scheme.h>
-#include <datastore/Selection.h>
+#include <datastore/PointerType.h>
 #include <vector>
-#include <memory>
 
 namespace DataStore
 {
-  class DatabaseInMemoryStorge;
+  class DatabaseInMemory;
+  typedef PointerType<DatabaseInMemory>::Shared DatabaseInMemoryPtrH;
 
+  struct IRow
+  {
+    virtual ValueConstPtrH getValue(const IFieldDescriptor& field) const = 0;
+    virtual IFieldDescriptorConstListConstPtrH getFieldDescriptors() const = 0;
+
+    // The field is passed in a shared ptr so that the impl can hang on to it
+    // but that might not actually ever be necessary..  Consider changing to
+    // const ref like everything else.
+    virtual bool setValue(IFieldDescriptorConstPtrH field, 
+      ValuePtrH value) = 0;
+  };
+
+  typedef PointerType<IRow>::Shared IRowPtrH;
+  typedef PointerType<IRow>::SharedConst IRowConstPtrH;
+
+  /**
+  */
   class Database
   {
   public:
-    
-    Database(std::shared_ptr<IScheme> scheme);
+    Database(ISchemePtrH scheme);
 
-    bool insert(const FieldValues& row);
+    IRowPtrH createRow() const;
+
+    bool insert(IRowPtrH row);
 
   private:
-    std::shared_ptr<IScheme> mScheme;
-    std::shared_ptr<DatabaseInMemoryStorge> mMemory;
-    IFieldDescriptors mFields;
+    ISchemePtrH mScheme;
+    DatabaseInMemoryPtrH mMemory;
+    IFieldDescriptorConstListConstPtrH mFields;
   };
 }
 

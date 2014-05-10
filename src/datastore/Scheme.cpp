@@ -27,13 +27,17 @@ namespace DataStore
   class SchemeJsonImpl
   {
   public:
-    SchemeJsonImpl(const char* schemeJson)
+    SchemeJsonImpl(const char* schemeJson) :
+      mFields(new IFieldDescriptorConstList()),
+      mKeyFields(new IFieldDescriptorConstList())
     {
       mScheme.Parse<0>(schemeJson);
       setScheme();
     }
 
-    SchemeJsonImpl(FILE* schemeFile)
+    SchemeJsonImpl(FILE* schemeFile) :
+      mFields(new IFieldDescriptorConstList()),
+      mKeyFields(new IFieldDescriptorConstList())
     {
       rapidjson::FileStream schemeStream(schemeFile);
       mScheme.ParseStream<0>(schemeStream);
@@ -44,16 +48,18 @@ namespace DataStore
     /** Build scheme from JSON, or throw if format is incorrect */
     void setScheme()
     {
-      mFields.clear();
-      mKeyFields.clear();
+      mFields->clear();
+      mKeyFields->clear();
 
       if (!mScheme.IsArray())
       {
         throw std::exception("Invalid Scheme JSON: expected array");
       }
 
+      FieldId fieldId = 0;
+
       for (rapidjson::Value::ConstValueIterator field = mScheme.Begin();
-        field != mScheme.End(); ++field)
+        field != mScheme.End(); ++field, ++fieldId)
       {
         if (field->GetType() != rapidjson::kObjectType)
         {
@@ -110,8 +116,8 @@ namespace DataStore
           }
         }
 
-        std::shared_ptr<IFieldDescriptor> fieldDescriptor;
-        fieldDescriptor = FieldDescriptorFactory::Create(type, name.c_str(), 
+        IFieldDescriptorPtrH fieldDescriptor;
+        fieldDescriptor = FieldDescriptorFactory::Create(fieldId, type, name.c_str(), 
           description.c_str(), isKey, size);
         if (!fieldDescriptor)
         {
@@ -122,21 +128,21 @@ namespace DataStore
 
         if (fieldDescriptor->isKey())
         {
-          mKeyFields.push_back(fieldDescriptor);
+          mKeyFields->push_back(fieldDescriptor);
         }
 
-        mFields.push_back(fieldDescriptor);
+        mFields->push_back(fieldDescriptor);
       }
 
       throwOnInvalidConstraints();
     }
 
-    const IFieldDescriptors& getFieldDescriptors() const
+    IFieldDescriptorConstListConstPtrH getFieldDescriptors() const
     {
       return mFields;
     }
 
-    const IFieldDescriptors& getKeyFieldDescriptors() const
+    IFieldDescriptorConstListConstPtrH getKeyFieldDescriptors() const
     {
       return mKeyFields;
     }
@@ -175,8 +181,8 @@ namespace DataStore
     {
       bool hasOneKey = false;
 
-      for (IFieldDescriptors::const_iterator field = mFields.begin();
-        field != mFields.end(); ++field)
+      for (IFieldDescriptorConstList::const_iterator field = mFields->begin();
+        field != mFields->end(); ++field)
       {
         if (strlen((*field)->getName()) == 0)
         {
@@ -203,8 +209,8 @@ namespace DataStore
     }
 
     rapidjson::Document mScheme;
-    IFieldDescriptors mFields;
-    IFieldDescriptors mKeyFields;
+    IFieldDescriptorConstListPtrH mFields;
+    IFieldDescriptorConstListPtrH mKeyFields;
   };
 }
 
@@ -224,17 +230,17 @@ SchemeJson::SchemeJson(const char* schemeJson)
 
 bool SchemeJson::allFieldsPresent(const std::vector<std::string>& headerFieldNames) const
 {
-  const IFieldDescriptors& fields = getFieldDescriptors();
+  IFieldDescriptorConstListConstPtrH fields = getFieldDescriptors();
 
-  if (fields.size() != headerFieldNames.size())
+  if (fields->size() != headerFieldNames.size())
   {
     return false;
   }
 
-  IFieldDescriptors::const_iterator field = fields.begin();
+  IFieldDescriptorConstList::const_iterator field = fields->begin();
   std::vector<std::string>::const_iterator headerFieldName = headerFieldNames.cbegin();
 
-  while (field != fields.end() && headerFieldName != headerFieldNames.cend())
+  while (field != fields->end() && headerFieldName != headerFieldNames.cend())
   {
     if (*headerFieldName != (*field)->getName())
     {
@@ -248,19 +254,19 @@ bool SchemeJson::allFieldsPresent(const std::vector<std::string>& headerFieldNam
   return true;
 }
 
-bool SchemeJson::allFieldsPresent(const DataStore::FieldValues& fieldValues) const
+bool SchemeJson::allFieldsPresent(const IFieldDescriptorList& fields) const
 {
   // Does not currently check types...
-  IFieldDescriptors fields = getFieldDescriptors();
-  return fields.size() == fieldValues.size();
+  IFieldDescriptorConstListConstPtrH expectedFields = getFieldDescriptors();
+  return expectedFields->size() == fields.size();
 }
 
-const IFieldDescriptors& SchemeJson::getFieldDescriptors() const
+IFieldDescriptorConstListConstPtrH SchemeJson::getFieldDescriptors() const
 {
   return mImpl->getFieldDescriptors();
 }
 
-const IFieldDescriptors& SchemeJson::getKeyFieldDescriptors() const
+IFieldDescriptorConstListConstPtrH SchemeJson::getKeyFieldDescriptors() const
 {
   return mImpl->getKeyFieldDescriptors();
 }

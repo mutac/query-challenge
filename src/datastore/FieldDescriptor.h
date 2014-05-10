@@ -4,12 +4,14 @@
 
 #include <datastore/Value.h>
 #include <datastore/FieldType.h>
+#include <datastore/PointerType.h>
 #include <string>
-#include <memory>
 #include <vector>
 
 namespace DataStore
 {
+  typedef int FieldId;
+
   /**
   */
   struct IFieldDescriptor
@@ -18,6 +20,7 @@ namespace DataStore
     virtual const char* getDescription() const = 0;
     virtual TypeInfo getType() const = 0;
     virtual size_t getSize() const = 0;
+    virtual FieldId getId() const = 0;
     virtual bool isKey() const = 0;
 
     virtual bool operator==(const IFieldDescriptor& other) const = 0;
@@ -33,16 +36,24 @@ namespace DataStore
     virtual std::shared_ptr<Value> fromString(const char* str) const = 0;
   };
 
-  /**
-  */
-  typedef std::vector<std::shared_ptr<IFieldDescriptor> > IFieldDescriptors;
+  typedef PointerType<IFieldDescriptor>::Shared IFieldDescriptorPtrH;
+  typedef PointerType<IFieldDescriptor>::SharedConst IFieldDescriptorConstPtrH;
+
+  typedef std::vector<IFieldDescriptorPtrH> IFieldDescriptorList;
+  typedef std::vector<IFieldDescriptorConstPtrH> IFieldDescriptorConstList;
+
+  typedef PointerType<IFieldDescriptorList>::Shared IFieldDescriptorListPtrH;
+  typedef PointerType<IFieldDescriptorList>::SharedConst IFieldDescriptorListConstPtrH;
+
+  typedef PointerType<IFieldDescriptorConstList>::Shared IFieldDescriptorConstListPtrH;
+  typedef PointerType<IFieldDescriptorConstList>::SharedConst IFieldDescriptorConstListConstPtrH;
 
   /**
   */
   class FieldDescriptorFactory
   {
   public:
-    static std::shared_ptr<IFieldDescriptor> Create(TypeInfo type,
+    static IFieldDescriptorPtrH Create(FieldId id, TypeInfo type,
     const char* name, const char* description, bool isKey, size_t size);
 
   private:
@@ -79,18 +90,20 @@ namespace DataStore
       return mIsKey;
     }
 
+    virtual FieldId getId() const
+    {
+      return mId;
+    }
+
     virtual bool operator==(const IFieldDescriptor& other) const
     {
-      return mType == other.getType() &&
-        mName == other.getName() &&
-        mSize == other.getSize() &&
-        mIsKey == other.isKey();
+      return mId == other.getId();
     }
 
   protected:
-    FieldDescriptorBase(TypeInfo type, const char* name,
+    FieldDescriptorBase(FieldId id, TypeInfo type, const char* name,
       const char* description, bool isKey, size_t size = 0) :
-        mType(type), mName(name), mDescrition(description),
+        mId(id), mType(type), mName(name), mDescrition(description),
         mIsKey(isKey), mSize(size)
     {
     }
@@ -100,6 +113,7 @@ namespace DataStore
     std::string mDescrition;
     TypeInfo mType;
     size_t mSize;
+    FieldId mId;
     bool mIsKey;
   };
 
@@ -108,13 +122,13 @@ namespace DataStore
   class TextFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    TextFieldDescriptor(const char* name, 
+    TextFieldDescriptor(FieldId id, const char* name, 
       const char* description, bool isKey, size_t size) :
-        FieldDescriptorBase(TypeInfo_String, name, description, isKey, size)
+        FieldDescriptorBase(id, TypeInfo_String, name, description, isKey, size)
     {
     }
 
-    virtual std::shared_ptr<Value> fromString(const char* str) const;
+    virtual ValuePtrH fromString(const char* str) const;
   };
 
   /**
@@ -122,12 +136,12 @@ namespace DataStore
   class DateFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    DateFieldDescriptor(const char* name, const char* description, bool isKey) :
-      FieldDescriptorBase(TypeInfo_Date, name, description, isKey, 0)
+    DateFieldDescriptor(FieldId id, const char* name, const char* description, bool isKey) :
+      FieldDescriptorBase(id, TypeInfo_Date, name, description, isKey, 0)
     {
     }
 
-    virtual std::shared_ptr<Value> fromString(const char* str) const;
+    virtual ValuePtrH fromString(const char* str) const;
   };
 
   /**
@@ -135,12 +149,12 @@ namespace DataStore
   class TimeFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    TimeFieldDescriptor(const char* name, const char* description, bool isKey) :
-      FieldDescriptorBase(TypeInfo_Time, name, description, isKey, 0)
+    TimeFieldDescriptor(FieldId id, const char* name, const char* description, bool isKey) :
+      FieldDescriptorBase(id, TypeInfo_Time, name, description, isKey, 0)
     {
     }
 
-    virtual std::shared_ptr<Value> fromString(const char* str) const;
+    virtual ValuePtrH fromString(const char* str) const;
   };
 
   /**
@@ -148,13 +162,13 @@ namespace DataStore
   class FloatFieldDescriptor : public FieldDescriptorBase
   {
   public:
-    FloatFieldDescriptor(const char* name, 
+    FloatFieldDescriptor(FieldId id, const char* name, 
       const char* description, bool isKey, size_t size) :
-      FieldDescriptorBase(TypeInfo_Float, name, description, isKey, size)
+      FieldDescriptorBase(id, TypeInfo_Float, name, description, isKey, size)
     {
     }
 
-    virtual std::shared_ptr<Value> fromString(const char* str) const;
+    virtual ValuePtrH fromString(const char* str) const;
   };
 }
 

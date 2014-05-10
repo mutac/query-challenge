@@ -26,10 +26,10 @@ namespace Tests
       {
         DataStore::SchemeJson scheme(schemeJson);
         
-        const DataStore::IFieldDescriptors& fields = scheme.getFieldDescriptors();
-        Assert::AreEqual((size_t)1, fields.size());
+        const DataStore::IFieldDescriptorConstListConstPtrH fields = scheme.getFieldDescriptors();
+        Assert::AreEqual((size_t)1, fields->size());
 
-        DataStore::IFieldDescriptor* oneField = fields.begin()->get();
+        const DataStore::IFieldDescriptor* oneField = fields->cbegin()->get();
         Assert::AreEqual("field1", oneField->getName());
         Assert::AreEqual(DataStore::TypeInfo_String, oneField->getType());
         Assert::AreEqual((size_t)128, oneField->getSize());
@@ -53,6 +53,7 @@ namespace Tests
       }
       catch (std::exception& ex)
       {
+        (void)ex;
         // Expected
       }
     }
@@ -89,11 +90,11 @@ namespace Tests
       try
       {
         DataStore::SchemeJson scheme(schemeJson);
-        const DataStore::IFieldDescriptors fields = scheme.getFieldDescriptors();
+        DataStore::IFieldDescriptorConstListConstPtrH fields = scheme.getFieldDescriptors();
 
-        Assert::AreEqual((size_t)4, fields.size());
+        Assert::AreEqual((size_t)4, fields->size());
 
-        DataStore::IFieldDescriptors::const_iterator field = fields.begin();
+        DataStore::IFieldDescriptorConstList::const_iterator field = fields->cbegin();
         Assert::AreEqual(DataStore::TypeInfo_String, (*field)->getType());
         ++field;
         Assert::AreEqual(DataStore::TypeInfo_Float, (*field)->getType());
@@ -128,6 +129,7 @@ namespace Tests
       }
       catch (std::exception& ex)
       {
+        (void)ex;
         // Exception expected
       }
     }

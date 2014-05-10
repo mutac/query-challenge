@@ -2,7 +2,9 @@
 #ifndef __LOGIC_H__
 #define __LOGIC_H__
 
-#include <datastore/FieldValue.h>
+#include <datastore/Database.h>
+#include <datastore/PointerType.h>
+#include <vector>
 
 namespace DataStore
 {
@@ -10,12 +12,14 @@ namespace DataStore
   */
   struct IQualifier
   {
-    virtual bool matches(const FieldValue& fieldValue) const = 0;
+    virtual bool matches(const IRow& row) const = 0;
+    virtual void getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const = 0;
   };
 
-  /**
-  */
-  typedef std::vector<std::shared_ptr<IQualifier> > IQualifiers;
+  typedef PointerType<IQualifier>::Shared IQualifierPtrH;
+  typedef PointerType<IQualifier>::SharedConst IQualifierConstPtrH;
+  typedef std::vector<IQualifierPtrH> IQualifierList;
+  typedef PointerType<IQualifierList>::Shared IQualifierListPtrH;
 
   namespace Logic
   {
@@ -28,11 +32,12 @@ namespace DataStore
       {
       }
 
-      void with(std::shared_ptr<IQualifier> qualifier);
-      bool matches(const FieldValue& value) const;
+      void with(IQualifierPtrH qualifier);
+      bool matches(const IRow& row) const;
+      void getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const;
 
     private:
-      IQualifiers mQualifiers;
+      IQualifierList mQualifiers;
     };
 
     /**
@@ -40,17 +45,17 @@ namespace DataStore
     class Exact : public IQualifier
     {
     public:
-      Exact(std::shared_ptr<IFieldDescriptor> field,
-        std::shared_ptr<Value> expected) :
-        mField(field), mExpected(expected)
+      Exact(IFieldDescriptorConstPtrH expectedField, ValueConstPtrH value) :
+        mExpectedField(expectedField), mExpectedValue(value)
       {
       }
 
-      bool matches(const FieldValue& value) const;
+      bool matches(const IRow& row) const;
+      void getFieldDescriptors(IFieldDescriptorConstList* outFieldDescriptors) const;
 
     private:
-      std::shared_ptr<IFieldDescriptor> mField;
-      std::shared_ptr<Value> mExpected;
+      IFieldDescriptorConstPtrH mExpectedField;
+      ValueConstPtrH mExpectedValue;
     };
   }
 
@@ -59,15 +64,15 @@ namespace DataStore
   class Predicate
   {
   public:
-    Predicate(std::shared_ptr<IQualifier> qualifierRoot) :
-      mRoot(qualifierRoot)
-    {
-    }
+    Predicate(IQualifierPtrH qualifierRoot);
 
-    bool matches(const FieldValue& values) const;
+    bool matches(const IRow& row) const;
 
   private:
-    std::shared_ptr<IQualifier> mRoot;
+    void compile();
+
+    IQualifierPtrH mRoot;
+    IFieldDescriptorConstListPtrH mSearchFields;
   };
 }
 

@@ -3,6 +3,7 @@
 
 using namespace DataStore;
 
+/*
 bool Selection::SelectFields(const IFieldDescriptors& fieldDescriptors,
   const FieldValues& inFieldValues,
   FieldValues* outSelection)
@@ -43,3 +44,4 @@ bool Selection::SelectField(const IFieldDescriptor& fieldDescriptor,
 
   return false;
 }
+*/

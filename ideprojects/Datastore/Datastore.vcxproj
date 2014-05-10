@@ -14,8 +14,8 @@
     <ClInclude Include="..\..\src\datastore\Database.h" />
     <ClInclude Include="..\..\src\datastore\FieldDescriptor.h" />
     <ClInclude Include="..\..\src\datastore\FieldType.h" />
-    <ClInclude Include="..\..\src\datastore\FieldValue.h" />
     <ClInclude Include="..\..\src\datastore\Logic.h" />
+    <ClInclude Include="..\..\src\datastore\PointerType.h" />
     <ClInclude Include="..\..\src\datastore\Scheme.h" />
     <ClInclude Include="..\..\src\datastore\Storage.h" />
     <ClInclude Include="..\..\src\datastore\Selection.h" />

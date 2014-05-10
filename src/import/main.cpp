@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     std::shared_ptr<DataStore::IScheme> scheme(new DataStore::SchemeJson(schemeFile));
     DataStore::Database database(scheme);
 
-    DataStore::IFieldDescriptors fieldDescriptors = scheme->getFieldDescriptors();
+    DataStore::IFieldDescriptorConstListConstPtrH fieldDescriptors = scheme->getFieldDescriptors();
 
     //
     // Read records from input, parse, and validate that they match scheme
@@ -85,7 +85,7 @@ int main(int argc, char** argv)
         getStringValues(row, &stringValues);
 
         // Make sure that the row has the right number of fields
-        if (stringValues.size() != fieldDescriptors.size())
+        if (stringValues.size() != fieldDescriptors->size())
         {
           std::stringstream ex;
           ex << "Row is missing a field, at line: " << line;
@@ -94,13 +94,14 @@ int main(int argc, char** argv)
         }
 
         // Parse each value in row.
-        DataStore::FieldValues fieldValues;
+
+        std::shared_ptr<DataStore::IRow> row = database.createRow();
         
-        DataStore::IFieldDescriptors::const_iterator fieldDescriptor = 
-          fieldDescriptors.cbegin();
+        DataStore::IFieldDescriptorConstList::const_iterator fieldDescriptor = 
+          fieldDescriptors->cbegin();
         std::vector<std::string>::const_iterator stringValue = stringValues.cbegin();
 
-        while (stringValue != stringValues.cend() && fieldDescriptor != fieldDescriptors.cend())
+        while (stringValue != stringValues.cend() && fieldDescriptor != fieldDescriptors->cend())
         {
           std::shared_ptr<DataStore::Value> value = 
             (*fieldDescriptor)->fromString(stringValue->c_str());
@@ -114,14 +115,20 @@ int main(int argc, char** argv)
             throw std::exception(str.c_str());
           }
 
-          fieldValues.push_back(
-            DataStore::FieldValue(*fieldDescriptor, value));
+          if (!row->setValue(*fieldDescriptor, value))
+          {
+            std::stringstream ex;
+            ex << "Unable to add value to row at field \"" << (*fieldDescriptor)->getName()
+              << "\" with value \"" << *stringValue << "\", at line" << line;
+            std::string str = ex.str();
+            throw std::exception(str.c_str());
+          }
 
           ++stringValue;
           ++fieldDescriptor;
         }
 
-        if (!database.insert(fieldValues))
+        if (!database.insert(row))
         {
           std::stringstream ex;
           ex << "Error inserting row at line " << line;

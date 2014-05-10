@@ -3,7 +3,7 @@
 #define __VALUE_H__
 
 #include <resource/Variant.h>
-#include <vector>
+#include <datastore/PointerType.h>
 
 namespace DataStore
 {
@@ -32,9 +32,8 @@ namespace DataStore
     mStd::Variant mValue;
   };
 
-  /**
-  */
-  typedef std::vector<std::shared_ptr<Value> > Values;
+  typedef PointerType<Value>::Shared ValuePtrH;
+  typedef PointerType<Value>::SharedConst ValueConstPtrH;
 }
 
 #endif

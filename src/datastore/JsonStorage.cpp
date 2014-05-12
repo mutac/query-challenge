@@ -1,5 +1,6 @@
 
 #include <datastore/JsonStorage.h>
+#include <datastore/Database.h>
 
 // Throw exceptions rather than assert on JSON parsing failures:
 #define RAPIDJSON_ASSERT(x)         \
@@ -10,6 +11,7 @@ do {                                \
 
 #include <rapidjson/document.h>
 #include <rapidjson/filestream.h>
+#include <rapidjson/prettywriter.h>
 #include <fstream>
 #include <streambuf>
 #include <string>
@@ -61,9 +63,10 @@ namespace DataStore
       readScheme(&scheme);
     }
 
-    SchemeJsonImpl(const rapidjson::Value* schemeJsonRoot)
+    SchemeJsonImpl() :
+      mFields(new IFieldDescriptorConstList()),
+      mKeyFields(new IFieldDescriptorConstList())
     {
-      readScheme(schemeJsonRoot);
     }
 
     /** Build scheme from JSON, or throw if format is incorrect */
@@ -117,7 +120,7 @@ namespace DataStore
           }
           else if (memberName == "type")
           {
-            type = parseTypeName(member->value.GetString());
+            type = TypeFromString(member->value.GetString());
           }
           else if (memberName == "size")
           {
@@ -160,6 +163,39 @@ namespace DataStore
       throwOnInvalidConstraints();
     }
 
+    template <class Allocator>
+    void writeScheme(rapidjson::Value* root, Allocator& allocator) const
+    {
+      rapidjson::Value& fieldArray = root->SetArray();
+
+      for (IFieldDescriptorConstList::const_iterator field = mFields->begin();
+        field != mFields->end(); ++field)
+      {
+        // Wow...
+
+        rapidjson::Value name;
+        rapidjson::Value type;
+        rapidjson::Value size;
+        rapidjson::Value description;
+        rapidjson::Value key;
+
+        name.SetString((*field)->getName());
+        type.SetString(TypeToString((*field)->getType()));
+        size.SetInt((*field)->getSize());
+        description.SetString((*field)->getDescription());
+        key.SetBool((*field)->isKey());
+
+        rapidjson::Value newFieldObject(rapidjson::kObjectType);
+        newFieldObject.AddMember("name", name, allocator);
+        newFieldObject.AddMember("type", type, allocator);
+        newFieldObject.AddMember("size", size, allocator);
+        newFieldObject.AddMember("description", description, allocator);
+        newFieldObject.AddMember("key", key, allocator);
+
+        fieldArray.PushBack(newFieldObject, allocator);
+      }
+    }
+
     IFieldDescriptorConstListConstPtrH getFieldDescriptors() const
     {
       return mFields;
@@ -171,8 +207,8 @@ namespace DataStore
     }
 
   private:
-    /** Parse supported data types, return FieldType which corresponds */
-    TypeInfo parseTypeName(const char* type)
+    /** Parse supported data types, return TypeInfo which corresponds */
+    static TypeInfo TypeFromString(const char* type)
     {
       std::string typeName(type);
       if (typeName == "text")
@@ -185,6 +221,21 @@ namespace DataStore
         return DataStore::TypeInfo_Time;
       else
         return DataStore::TypeInfo_Empty;
+    }
+
+    /** Return string representation of a TypeInfo */
+    static const char* TypeToString(TypeInfo type)
+    {
+      if (type == DataStore::TypeInfo_String)
+        return "text";
+      else if (type == DataStore::TypeInfo_Date)
+        return "date";
+      else if (type == DataStore::TypeInfo_Float)
+        return "float";
+      else if (type == DataStore::TypeInfo_Time)
+        return "time";
+      else
+        return "null";
     }
 
     /** Throw an exception if one of a few constrainst are not met */
@@ -235,7 +286,7 @@ namespace DataStore
       mDatabaseFile(dbFile),
       mRowDataRoot(NULL)
     {
-      readDatastore();
+      loadDatastore();
     }
 
     DataStorageJsonImpl(SchemeJsonConstPtrH scheme, FILE* newDbFile) :
@@ -245,16 +296,73 @@ namespace DataStore
     {
     }
 
+    /**
+    */
     SchemeJsonConstPtrH getScheme() const
     {
       return mScheme;
+    }
+
+    /**
+    */
+    void load(Database* database)
+    {
+      // If the row root is not set, the datastore must be new
+      if (mRowDataRoot != NULL)
+        loadRows(mRowDataRoot, database);
+    }
+
+    void beginPersist()
+    {
+      mRowDataRoot = NULL;
+
+      rapidjson::Value& dbObject = mDatabase.SetObject();
+
+      rapidjson::Value schemeObject;
+      mScheme->getImpl()->writeScheme(&schemeObject, mDatabase.GetAllocator());
+      dbObject.AddMember("scheme", schemeObject, mDatabase.GetAllocator());
+
+      rapidjson::Value rowsObject(rapidjson::kArrayType);
+      dbObject.AddMember("rows", rowsObject, mDatabase.GetAllocator());
+      mRowDataRoot = &rowsObject;
+    }
+
+    void persistRow(const IRow* row)
+    {
+      if (mRowDataRoot != NULL)
+      {
+        rapidjson::Value jsonRow(rapidjson::kArrayType);
+
+        IFieldDescriptorConstListConstPtrH fields = row->getFieldDescriptors();
+        for (IFieldDescriptorConstList::const_iterator field = fields->cbegin();
+          field != fields->cend(); ++field)
+        {
+          rapidjson::Value jsonVal;
+
+          ValueConstPtrH rowValue = row->getValue(*(field->get()));
+
+          mStd::mString strValue;
+          rowValue->getValue().convertTo(&strValue);
+          jsonVal.SetString(strValue.c_str());
+
+          jsonRow.PushBack(jsonVal, mDatabase.GetAllocator());
+        }
+
+        mRowDataRoot->PushBack(jsonRow, mDatabase.GetAllocator());
+      }
+    }
+
+    void endPersist()
+    {
+      rapidjson::PrettyWriter<rapidjson::FileStream> writer(mDatabaseFile);
+      mDatabase.Accept(writer);
     }
 
   private:
 
     /**
     */
-    void readDatastore()
+    void loadDatastore()
     {
       mDatabase.ParseStream<0>(mDatabaseFile);
 
@@ -268,16 +376,19 @@ namespace DataStore
       bool foundScheme = false;
       bool foundRows = false;
 
-      for (rapidjson::Value::ConstMemberIterator dbMember = mDatabase.MemberBegin();
+      for (rapidjson::Value::MemberIterator dbMember = mDatabase.MemberBegin();
         dbMember != mDatabase.MemberEnd(); ++dbMember)
       {
-        if (dbMember->name.GetString() == "scheme")
+        if (strcmp(dbMember->name.GetString(), "scheme") == 0)
         {
-          mScheme = SchemeJsonPtrH(new SchemeJson((void*)&dbMember->value));
+          mScheme = SchemeJsonPtrH(new SchemeJson());
+          mScheme->getImpl()->readScheme(&dbMember->value);
           foundScheme = true;
         }
-        else if (dbMember->name.GetString() == "rows")
+        else if (strcmp(dbMember->name.GetString(), "rows") == 0)
         {
+          // Loading rows is dictated by the database instance, cache
+          // the location of the rows for later.
           mRowDataRoot = &dbMember->value;
           foundRows = true;
         }
@@ -293,7 +404,9 @@ namespace DataStore
       }
     }
 
-    void readRows(const rapidjson::Value* root)
+    /**
+    */
+    void loadRows(const rapidjson::Value* root, Database* database)
     {
       // Scheme must have already been parsed by this point
       mDebugAssert(mScheme);
@@ -322,21 +435,30 @@ namespace DataStore
           throw std::exception(ex.c_str());
         } 
 
-        int fieldIdx = 0;
-        for (rapidjson::Value::ConstValueIterator field = row->Begin();
-          field != row->End(); ++field)
+        IRowPtrH newRow = database->createRow();
+
+        size_t fieldIdx = 0;
+        for (rapidjson::Value::ConstValueIterator jsonValue = row->Begin();
+          jsonValue != row->End(); ++jsonValue)
         {
-          ValueConstPtrH value = 
-            (*fieldDescriptors)[fieldIdx]->fromString(field->GetString());
-          ++fieldIdx;
+          IFieldDescriptorConstPtrH field = (*fieldDescriptors)[fieldIdx];
+          ValuePtrH value = field->fromString(jsonValue->GetString());
+          newRow->setValue(field, value);
+        }
+
+        if (!database->insert(newRow))
+        {
+          throw std::exception("Invalid Database JSON: corrupt row");
         }
       }
     }
 
-    rapidjson::FileStream mDatabaseFile;
-    SchemeJsonConstPtrH mScheme;
     rapidjson::Document mDatabase;
-    const rapidjson::Value* mRowDataRoot;
+    rapidjson::FileStream mDatabaseFile;
+
+    rapidjson::Value* mRowDataRoot;
+
+    SchemeJsonConstPtrH mScheme;
   };
 }
 
@@ -353,8 +475,8 @@ SchemeJson::SchemeJson(const char* schemeJson)
 {
 }
 
-SchemeJson::SchemeJson(const void* root)
-: mImpl(new SchemeJsonImpl(reinterpret_cast<const rapidjson::Value*>(root)))
+SchemeJson::SchemeJson()
+: mImpl(new SchemeJsonImpl())
 {
 }
 
@@ -401,6 +523,11 @@ IFieldDescriptorConstListConstPtrH SchemeJson::getKeyFieldDescriptors() const
   return mImpl->getKeyFieldDescriptors();
 }
 
+SchemeJsonImpl* SchemeJson::getImpl() const
+{
+  return mImpl.get();
+}
+
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
@@ -415,6 +542,7 @@ DatabasePtrH DataStorageJson::Create(SchemeJsonConstPtrH scheme, FILE* emptyDbFi
 {
   IDataStoragePtrH newStoragePtrH(new DataStorageJson(scheme, emptyDbFile));
   DatabasePtrH newDb(new Database(newStoragePtrH));
+
   return newDb;
 }
 
@@ -423,6 +551,7 @@ DatabasePtrH DataStorageJson::Create(FILE* schemeFile, FILE* emptyDbFile)
   SchemeJsonPtrH scheme(new SchemeJson(schemeFile));
   IDataStoragePtrH newStoragePtrH(new DataStorageJson(scheme, emptyDbFile));
   DatabasePtrH newDb(new Database(newStoragePtrH));
+
   return newDb;
 }
 
@@ -441,5 +570,23 @@ ISchemeConstPtrH DataStorageJson::getScheme()
   return mImpl->getScheme();
 }
 
+void DataStorageJson::load(Database* database)
+{
+  mImpl->load(database);
+}
 
+void DataStorageJson::beginPersist()
+{
+  mImpl->beginPersist();
+}
+
+void DataStorageJson::persistRow(const IRow* row)
+{
+  mImpl->persistRow(row);
+}
+
+void DataStorageJson::endPersist()
+{
+  mImpl->endPersist();
+}
 

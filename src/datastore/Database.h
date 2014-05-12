@@ -4,6 +4,7 @@
 
 #include <datastore/Scheme.h>
 #include <datastore/DataStorage.h>
+#include <Resource/mString.h>
 #include <vector>
 
 namespace DataStore
@@ -38,10 +39,14 @@ namespace DataStore
     // Create an in-memory only database
     Database(ISchemeConstPtrH scheme);
 
+    ~Database();
+
     IRowPtrH createRow() const;
     bool insert(IRowConstPtrH row);
 
     ISchemeConstPtrH getScheme() const;
+
+    void persist();
 
   private:
     ISchemeConstPtrH mScheme;

@@ -64,14 +64,16 @@ namespace DataStore
     /** JSON scheme descriptor json text */
     SchemeJson(const char* schemeJson);
 
-    /** @hidden - internal use only */
-    SchemeJson(const void* root);
+    SchemeJson();
 
     bool allFieldsPresent(const std::vector<std::string>& fieldNames) const;
     bool allFieldsPresent(const IFieldDescriptorList& fields) const;
 
     IFieldDescriptorConstListConstPtrH getFieldDescriptors() const;
     IFieldDescriptorConstListConstPtrH getKeyFieldDescriptors() const;
+
+    /** @hidden - internal use only */
+    SchemeJsonImpl* getImpl() const;
 
   private:
     SchemeJsonImplPtrH mImpl;
@@ -103,9 +105,16 @@ namespace DataStore
 
     ISchemeConstPtrH getScheme();
 
+    void load(Database* database);
+
+    void beginPersist();
+    void persistRow(const IRow* row);
+    void endPersist();
+
   private:
     /** Load an existing datastorage */
     DataStorageJson(FILE* dbFile);
+
 
     /** Create a new datastorage, given a scheme */
     DataStorageJson(SchemeJsonConstPtrH scheme, FILE* newDbFile);

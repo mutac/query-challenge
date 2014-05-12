@@ -197,6 +197,15 @@ namespace DataStore
       return true;
     }
 
+    void persist(IDataStorage* storage)
+    {
+      for (std::vector<IRowConstPtrH>::const_iterator row = mRows.cbegin();
+        row != mRows.cend(); ++row)
+      {
+        storage->persistRow(row->get());
+      }
+    }
+
   private:
     std::vector<IRowConstPtrH> mRows;
   };
@@ -212,6 +221,8 @@ Database::Database(IDataStoragePtrH storage) :
 {
   mFields = mScheme->getFieldDescriptors();
   mKeyFields = mScheme->getKeyFieldDescriptors();
+
+  storage->load(this);
 }
 
 Database::Database(ISchemeConstPtrH scheme) :
@@ -220,6 +231,11 @@ Database::Database(ISchemeConstPtrH scheme) :
 {
   mFields = mScheme->getFieldDescriptors();
   mKeyFields = mScheme->getKeyFieldDescriptors();
+}
+
+Database::~Database()
+{
+  persist();
 }
 
 ISchemeConstPtrH Database::getScheme() const
@@ -231,6 +247,16 @@ IRowPtrH Database::createRow() const
 {
   IRowPtrH newRow(new DatabaseInMemory::Row(mFields));
   return newRow;
+}
+
+void Database::persist()
+{
+  if (mStorage)
+  {
+    mStorage->beginPersist();
+    mMemory->persist(mStorage.get());
+    mStorage->endPersist();
+  }
 }
 
 bool Database::insert(IRowConstPtrH row)

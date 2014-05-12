@@ -69,10 +69,7 @@ namespace DataStore
     bool matches(const IRow& row) const;
 
   private:
-    void compile();
-
     IQualifierPtrH mRoot;
-    IFieldDescriptorConstListPtrH mSearchFields;
   };
 }
 

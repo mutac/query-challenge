@@ -10,16 +10,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\datastore\tests\TestDatabase.cpp">
+      <Filter>Source Files\DataStoreTests</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\datastore\tests\TestDate.cpp">
+      <Filter>Source Files\DataStoreTests</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\src\datastore\tests\TestScheme.cpp">
       <Filter>Source Files\DataStoreTests</Filter>
     </ClCompile>
-    <ClCompile Include="TestDate.cpp">
-      <Filter>Source Files\DataStoreTests</Filter>
-    </ClCompile>
-    <ClCompile Include="TestTime.cpp">
-      <Filter>Source Files\DataStoreTests</Filter>
-    </ClCompile>
-    <ClCompile Include="TestDatabase.cpp">
+    <ClCompile Include="..\..\src\datastore\tests\TestTime.cpp">
       <Filter>Source Files\DataStoreTests</Filter>
     </ClCompile>
   </ItemGroup>

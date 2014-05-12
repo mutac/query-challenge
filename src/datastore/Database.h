@@ -3,16 +3,13 @@
 #define __DATABASE_H__
 
 #include <datastore/Scheme.h>
-#include <datastore/PointerType.h>
+#include <datastore/DataStorage.h>
 #include <vector>
 
 namespace DataStore
 {
   class DatabaseInMemory;
   typedef PointerType<DatabaseInMemory>::Shared DatabaseInMemoryPtrH;
-
-  class DatabaseOnDiskMemory;
-  typedef PointerType<DatabaseOnDiskMemory>::Shared DatabaseOnDiskMemoryPtrH;
 
   /**
   */
@@ -36,18 +33,25 @@ namespace DataStore
   class Database
   {
   public:
-    Database(ISchemePtrH scheme);
+    Database(IDataStoragePtrH storage);
+
+    // Create an in-memory only database
+    Database(ISchemeConstPtrH scheme);
 
     IRowPtrH createRow() const;
-
     bool insert(IRowConstPtrH row);
 
+    ISchemeConstPtrH getScheme() const;
+
   private:
-    ISchemePtrH mScheme;
+    ISchemeConstPtrH mScheme;
+    IDataStoragePtrH mStorage;
     DatabaseInMemoryPtrH mMemory;
-    DatabaseOnDiskMemoryPtrH mDisk;
     IFieldDescriptorConstListConstPtrH mFields;
+    IFieldDescriptorConstListConstPtrH mKeyFields;
   };
+
+  typedef PointerType<Database>::Shared DatabasePtrH;
 }
 
 #endif

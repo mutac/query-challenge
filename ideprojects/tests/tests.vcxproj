@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\datastore\tests\TestDatabase.cpp" />
+    <ClCompile Include="..\..\src\datastore\tests\TestDate.cpp" />
     <ClCompile Include="..\..\src\datastore\tests\TestScheme.cpp" />
-    <ClCompile Include="TestDatabase.cpp" />
-    <ClCompile Include="TestDate.cpp" />
-    <ClCompile Include="TestTime.cpp" />
+    <ClCompile Include="..\..\src\datastore\tests\TestTime.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{E0F48A6A-03B4-402B-ABA3-1CDA1BE39D44}</ProjectGuid>

@@ -8,6 +8,7 @@
 #include <exception>
 #include <tclap/CmdLine.h>
 #include <datastore/Database.h>
+#include <datastore/JsonStorage.h>
 
 static const char kFieldDelimiter = '|';
 
@@ -29,35 +30,64 @@ int main(int argc, char** argv)
   try
   {
     TCLAP::CmdLine cmd("Datastore Importer. Reads bar-delimited input and appends records to datastore.", ' ');
-    TCLAP::ValueArg<std::string> schemeArg("s", "scheme", "JSON Datastore scheme filename", false, "Scheme.json", "JSON scheme filename");
-    TCLAP::ValueArg<std::string> importFile("i", "import", "Bar-delimited input file name", false, "", "Bar-delmiited input file");
-    cmd.add(schemeArg);
-    cmd.add(importFile);
+    TCLAP::ValueArg<std::string> createUsingSchemeArg("c", "create", "Create a new data store using a JSON scheme filename", false, "Scheme.json", "JSON scheme filename");
+    TCLAP::ValueArg<std::string> importFileArg("i", "import", "Bar-delimited input file name", false, "", "Bar-delmiited input file");
+    TCLAP::ValueArg<std::string> datastoreFileArg("d", "db", "JSON Datastore file", false, "db.json", "Database file");
+    cmd.add(createUsingSchemeArg);
+    cmd.add(importFileArg);
+    cmd.add(datastoreFileArg);
     cmd.parse(argc, argv);
 
+    // Read from stdin by default
     std::ifstream inputFile;
     std::istream* input = &std::cin;
 
-    if (!importFile.getValue().empty())
+    // unless '-i' arg is specified
+    if (!importFileArg.getValue().empty())
     {
-      inputFile.open(importFile.getValue().c_str(), std::fstream::in);
+      inputFile.open(importFileArg.getValue().c_str(), std::fstream::in);
       input = &inputFile;
     }
 
-    FILE* schemeFile = fopen(schemeArg.getValue().c_str(), "r");
-    if (!schemeFile)
+    bool isInCreateMode = createUsingSchemeArg.isSet();
+
+    FILE* schemeFile = NULL;
+    if (createUsingSchemeArg.isSet())
     {
-      throw std::exception("Unable to open scheme file");
+      FILE* schemeFile = fopen(createUsingSchemeArg.getValue().c_str(), "r");
+      if (!schemeFile)
+      {
+        throw std::exception("Unable to open scheme file");
+      }
+    }
+
+    FILE* datastoreFile = fopen(datastoreFileArg.getValue().c_str(), "rw");
+    if (!datastoreFile)
+    {
+      throw std::exception("Unable to open datastorage file for reading & writing");
     }
 
     //
-    // Parse the scheme, and get the FieldDescriptors that will
-    // describe how to parse the input rows.
+    // Load or create the database
     //
 
-    DataStore::ISchemePtrH scheme(new DataStore::SchemeJson(schemeFile));
-    DataStore::Database database(scheme);
-    DataStore::IFieldDescriptorConstListConstPtrH fieldDescriptors = scheme->getFieldDescriptors();
+    DataStore::DatabasePtrH database;
+    if (isInCreateMode)
+    {
+      database = DataStore::DataStorageJson::Create(schemeFile, datastoreFile);
+    }
+    else
+    {
+      database = DataStore::DataStorageJson::Load(datastoreFile);
+    }
+
+    //
+    // Use the FieldDescriptors to decide how to parse the input rows.
+    //
+
+    DataStore::ISchemeConstPtrH scheme(database->getScheme());
+    DataStore::IFieldDescriptorConstListConstPtrH fieldDescriptors = 
+      scheme->getFieldDescriptors();
 
     //
     // Read records from input, parse, and validate that they match scheme
@@ -94,7 +124,7 @@ int main(int argc, char** argv)
 
         // Parse each value in row.
 
-        DataStore::IRowPtrH row = database.createRow();
+        DataStore::IRowPtrH row = database->createRow();
         
         DataStore::IFieldDescriptorConstList::const_iterator fieldDescriptor = 
           fieldDescriptors->cbegin();
@@ -127,7 +157,7 @@ int main(int argc, char** argv)
           ++fieldDescriptor;
         }
 
-        if (!database.insert(row))
+        if (!database->insert(row))
         {
           std::stringstream ex;
           ex << "Error inserting row at line " << line;

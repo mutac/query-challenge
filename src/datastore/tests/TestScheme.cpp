@@ -1,6 +1,6 @@
 #include <CppUnitTest.h>
 #include <exception>
-#include <datastore/Scheme.h>
+#include <datastore/JsonStorage.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

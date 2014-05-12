@@ -7,17 +7,8 @@ using namespace DataStore;
 /////////////////////////////////////////////////////////////////////
 
 Predicate::Predicate(IQualifierPtrH qualifierRoot) :
-  mSearchFields(new IFieldDescriptorConstList()),
   mRoot(qualifierRoot)
 {
-  compile();
-}
-
-void Predicate::compile()
-{
-  // Collect the fields that need to be searched
-  mSearchFields->clear();
-  mRoot->getFieldDescriptors(mSearchFields.get());
 }
 
 bool Predicate::matches(const IRow& row) const

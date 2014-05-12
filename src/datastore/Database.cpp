@@ -200,22 +200,31 @@ namespace DataStore
   private:
     std::vector<IRowConstPtrH> mRows;
   };
-
-  /**
-  */
-  class DatabaseOnDiskMemory
-  {
-  };
 }
 
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-Database::Database(ISchemePtrH scheme) :
+Database::Database(IDataStoragePtrH storage) :
+  mStorage(storage),
+  mScheme(storage->getScheme()),
+  mMemory(new DatabaseInMemory())
+{
+  mFields = mScheme->getFieldDescriptors();
+  mKeyFields = mScheme->getKeyFieldDescriptors();
+}
+
+Database::Database(ISchemeConstPtrH scheme) :
   mScheme(scheme),
   mMemory(new DatabaseInMemory())
 {
   mFields = mScheme->getFieldDescriptors();
+  mKeyFields = mScheme->getKeyFieldDescriptors();
+}
+
+ISchemeConstPtrH Database::getScheme() const
+{
+  return mScheme;
 }
 
 IRowPtrH Database::createRow() const
@@ -226,25 +235,17 @@ IRowPtrH Database::createRow() const
 
 bool Database::insert(IRowConstPtrH row)
 {  
-
-  //
-  // Select only the key fields
-  //
-
-  IFieldDescriptorConstListConstPtrH keyFields = mScheme->getKeyFieldDescriptors();
-  IRowPtrH keyValues(new DatabaseInMemory::RowSelection(keyFields, row));
-
   //
   // Create constraint that will match iff all key fields are exact
   //
 
   Logic::And* and = new Logic::And();
-  for (IFieldDescriptorConstList::const_iterator keyField = keyFields->cbegin();
-    keyField != keyFields->cend(); ++keyField)
+  for (IFieldDescriptorConstList::const_iterator keyField = mKeyFields->cbegin();
+    keyField != mKeyFields->cend(); ++keyField)
   {
     IFieldDescriptorConstPtrH field = *keyField;
 
-    IQualifierPtrH exactKeyValue(new Logic::Exact(field, keyValues->getValue(*field)));
+    IQualifierPtrH exactKeyValue(new Logic::Exact(field, row->getValue(*field)));
     and->with(exactKeyValue);
   }
 

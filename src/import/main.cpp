@@ -29,25 +29,14 @@ int main(int argc, char** argv)
 {
   try
   {
-    TCLAP::CmdLine cmd("Datastore Importer. Reads bar-delimited input and appends records to datastore.", ' ');
-    TCLAP::ValueArg<std::string> createUsingSchemeArg("c", "create", "Create a new data store using a JSON scheme filename", false, "Scheme.json", "JSON scheme filename");
-    TCLAP::ValueArg<std::string> importFileArg("i", "import", "Bar-delimited input file name", false, "", "Bar-delmiited input file");
-    TCLAP::ValueArg<std::string> datastoreFileArg("d", "db", "JSON Datastore file", false, "db.json", "Database file");
+    TCLAP::CmdLine cmd("Datastore Importer. Reads bar-delimited input and appends records to datastore.\nCreate a new database:\n>  Import.exe -c Scheme.json -d mydb.json\nImport data into your database:\n>  cat Example1.txt | Import.exe -d mydb.json\n(or)\n>  Import.exe -d mydb.json -i Example1.txt", ' ');
+    TCLAP::ValueArg<std::string> createUsingSchemeArg("c", "create", "Create a new data store using a JSON scheme file, and exit", false, "Scheme.json", "JSON scheme file");
+    TCLAP::ValueArg<std::string> importFileArg("i", "import", "Bar-delimited input file name.  If none specified, reads from STDIN", false, "", "Bar delmited input file");
+    TCLAP::ValueArg<std::string> datastoreFileArg("d", "db", "JSON database file name to load or create", true, "db.json", "Database file");
     cmd.add(createUsingSchemeArg);
     cmd.add(importFileArg);
     cmd.add(datastoreFileArg);
     cmd.parse(argc, argv);
-
-    // Read from stdin by default
-    std::ifstream inputFile;
-    std::istream* input = &std::cin;
-
-    // unless '-i' arg is specified
-    if (!importFileArg.getValue().empty())
-    {
-      inputFile.open(importFileArg.getValue().c_str(), std::fstream::in);
-      input = &inputFile;
-    }
 
     bool isInCreateMode = createUsingSchemeArg.isSet();
 
@@ -75,10 +64,23 @@ int main(int argc, char** argv)
     if (isInCreateMode)
     {
       database = DataStore::DataStorageJson::Create(schemeFile, datastoreFile);
+      std::cout << "Database \"" << datastoreFileArg.getValue() << "\" created" << std::endl;
+      return 0;
     }
     else
     {
       database = DataStore::DataStorageJson::Load(datastoreFile);
+    }
+
+    // Read from stdin by default
+    std::ifstream inputFile;
+    std::istream* input = &std::cin;
+
+    // unless '-i' arg is specified
+    if (!importFileArg.getValue().empty())
+    {
+      inputFile.open(importFileArg.getValue().c_str(), std::fstream::in);
+      input = &inputFile;
     }
 
     //

@@ -235,6 +235,7 @@ namespace DataStore
       mDatabaseFile(dbFile),
       mRowDataRoot(NULL)
     {
+      readDatastore();
     }
 
     DataStorageJsonImpl(SchemeJsonConstPtrH scheme, FILE* newDbFile) :

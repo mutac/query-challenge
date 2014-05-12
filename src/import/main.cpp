@@ -54,14 +54,14 @@ int main(int argc, char** argv)
     FILE* schemeFile = NULL;
     if (createUsingSchemeArg.isSet())
     {
-      FILE* schemeFile = fopen(createUsingSchemeArg.getValue().c_str(), "r");
+      schemeFile = fopen(createUsingSchemeArg.getValue().c_str(), "r");
       if (!schemeFile)
       {
         throw std::exception("Unable to open scheme file");
       }
     }
 
-    FILE* datastoreFile = fopen(datastoreFileArg.getValue().c_str(), "rw");
+    FILE* datastoreFile = fopen(datastoreFileArg.getValue().c_str(), "a+");
     if (!datastoreFile)
     {
       throw std::exception("Unable to open datastorage file for reading & writing");

@@ -5,6 +5,7 @@
 *.suo
 *.user
 *.sln.docstates
+examples/db.json
 
 # Build results
 

@@ -26,8 +26,10 @@ namespace DataStore
   /** Given a rapidjson type, return a string describing it.  For error reporting... */
   const char* jsonTypeToString(rapidjson::Type type)
   {
-    static const char* kTypeNames[] = { "Null", "False", "True", "Object", "Array", "String", "Number" };
-    if (((int)type) < 0 || ((int)type) > (sizeof(kTypeNames) / sizeof(char*)))
+    static const char* kTypeNames[] = { "Null", "False", "True", 
+      "Object", "Array", "String", "Number" };
+
+    if (((int)type) < 0 || ((int)type) > (mCountOf(kTypeNames)))
     {
       return "Unknown";
     }
@@ -282,18 +284,29 @@ namespace DataStore
   class DataStorageJsonImpl
   {
   public:
-    DataStorageJsonImpl(FILE* dbFile) :
-      mDatabaseFile(dbFile),
+    DataStorageJsonImpl(const char* dbFilename) :
+      mDatabaseFilename(dbFilename),
+      mDatabaseFileHandle(NULL),
       mRowDataRoot(NULL)
     {
+      // Load existing
+      open(eExisting);
       loadDatastore();
     }
 
-    DataStorageJsonImpl(SchemeJsonConstPtrH scheme, FILE* newDbFile) :
+    DataStorageJsonImpl(SchemeJsonConstPtrH scheme,
+        const char* newDbFilename) :
       mScheme(scheme),
-      mDatabaseFile(newDbFile),
+      mDatabaseFilename(newDbFilename),
+      mDatabaseFileHandle(NULL),
       mRowDataRoot(NULL)
     {
+      // This will be a new db
+    }
+
+    ~DataStorageJsonImpl()
+    {
+      close();
     }
 
     /**
@@ -307,11 +320,11 @@ namespace DataStore
     */
     void load(Database* database)
     {
-      // If the row root is not set, the datastore must be new
-      if (mRowDataRoot != NULL)
-        loadRows(mRowDataRoot, database);
+      loadRows(database);
     }
 
+    /**
+    */
     void beginPersist()
     {
       mRowDataRoot = NULL;
@@ -324,137 +337,216 @@ namespace DataStore
 
       rapidjson::Value rowsObject(rapidjson::kArrayType);
       dbObject.AddMember("rows", rowsObject, mDatabase.GetAllocator());
-      mRowDataRoot = &rowsObject;
+      
+      mRowDataRoot = &dbObject["rows"];
     }
 
+    /**
+    */
     void persistRow(const IRow* row)
     {
       if (mRowDataRoot != NULL)
       {
+        rapidjson::Document::AllocatorType& allocator = mDatabase.GetAllocator();
+
         rapidjson::Value jsonRow(rapidjson::kArrayType);
 
         IFieldDescriptorConstListConstPtrH fields = row->getFieldDescriptors();
         for (IFieldDescriptorConstList::const_iterator field = fields->cbegin();
           field != fields->cend(); ++field)
         {
-          rapidjson::Value jsonVal;
+          rapidjson::Value jsonValue;
+          mStd::mString strValue;
 
           ValueConstPtrH rowValue = row->getValue(*(field->get()));
+          if (rowValue)
+          {
+            // Persist as string value... Could use native json numeric types
+            rowValue->getValue().convertTo(&strValue);
+          }
 
-          mStd::mString strValue;
-          rowValue->getValue().convertTo(&strValue);
-          jsonVal.SetString(strValue.c_str());
+          if (!strValue.empty())
+          {
+            jsonValue.SetString(strValue.c_str(), allocator);
+          }
+          else
+          {
+            jsonValue.SetString("");
+          }
 
-          jsonRow.PushBack(jsonVal, mDatabase.GetAllocator());
+
+          jsonRow.PushBack(jsonValue,allocator);
         }
 
-        mRowDataRoot->PushBack(jsonRow, mDatabase.GetAllocator());
+        mRowDataRoot->PushBack(jsonRow, allocator);
       }
     }
 
+    /**
+    */
     void endPersist()
     {
-      rapidjson::PrettyWriter<rapidjson::FileStream> writer(mDatabaseFile);
+      open(eOverwrite);
+
+      rapidjson::FileStream dbFile(mDatabaseFileHandle);
+      rapidjson::PrettyWriter<rapidjson::FileStream> writer(dbFile);
       mDatabase.Accept(writer);
     }
 
   private:
 
+    bool isOpen() const
+    {
+      return mDatabaseFileHandle != NULL;
+    }
+
+    void close()
+    {
+      if (isOpen())
+      {
+        fclose(mDatabaseFileHandle);
+        mDatabaseFileHandle = NULL;
+      }
+    }
+
+    typedef enum
+    {
+      eOverwrite = 1,
+      eExisting = 2
+    } OpenMode;
+
+    void open(OpenMode mode)
+    {
+      close();
+
+      const char* fmode = "r+";
+      if (mode == eOverwrite)
+      {
+        fmode = "w+";
+      }
+
+      // Open existing for reading/writing, if not create a new one
+      mDatabaseFileHandle = fopen(mDatabaseFilename.c_str(), fmode);
+      if (!mDatabaseFileHandle)
+      {
+        std::string ex = "Unable to open database \"" +
+          mDatabaseFilename + "\"";
+        throw std::exception(ex.c_str());
+      }
+    }
+
+    void seekBeginning()
+    {
+      if (isOpen())
+      {
+        fseek(mDatabaseFileHandle, 0, SEEK_SET);
+      }
+    }
+
     /**
     */
     void loadDatastore()
     {
-      mDatabase.ParseStream<0>(mDatabaseFile);
-
-      if (!mDatabase.IsObject())
+      if (isOpen())
       {
-        std::string ex = "Invalid Database JSON: expected array, found ";
-        ex += jsonTypeToString(mDatabase.GetType());
-        throw std::exception(ex.c_str());
-      }
+        rapidjson::FileStream dbFile(mDatabaseFileHandle);
+        mDatabase.ParseStream<0>(dbFile);
 
-      bool foundScheme = false;
-      bool foundRows = false;
-
-      for (rapidjson::Value::MemberIterator dbMember = mDatabase.MemberBegin();
-        dbMember != mDatabase.MemberEnd(); ++dbMember)
-      {
-        if (strcmp(dbMember->name.GetString(), "scheme") == 0)
+        if (!mDatabase.IsObject())
         {
-          mScheme = SchemeJsonPtrH(new SchemeJson());
-          mScheme->getImpl()->readScheme(&dbMember->value);
-          foundScheme = true;
+          std::string ex = "Invalid Database JSON: expected array, found ";
+          ex += jsonTypeToString(mDatabase.GetType());
+          throw std::exception(ex.c_str());
         }
-        else if (strcmp(dbMember->name.GetString(), "rows") == 0)
-        {
-          // Loading rows is dictated by the database instance, cache
-          // the location of the rows for later.
-          mRowDataRoot = &dbMember->value;
-          foundRows = true;
-        }
-      }
 
-      if (!foundScheme)
-      {
-        throw std::exception("Invalid Database JSON: \"scheme\" member not found");
-      }
-      if (!foundRows)
-      {
-        throw std::exception("Invalid Database JSON: \"rows\" member not found");
+        bool foundScheme = false;
+        bool foundRows = false;
+
+        for (rapidjson::Value::MemberIterator dbMember = mDatabase.MemberBegin();
+          dbMember != mDatabase.MemberEnd(); ++dbMember)
+        {
+          if (strcmp(dbMember->name.GetString(), "scheme") == 0)
+          {
+            mScheme = SchemeJsonPtrH(new SchemeJson());
+            mScheme->getImpl()->readScheme(&dbMember->value);
+            foundScheme = true;
+          }
+          else if (strcmp(dbMember->name.GetString(), "rows") == 0)
+          {
+            // Loading rows is dictated by the database instance, cache
+            // the location of the rows for later.
+            mRowDataRoot = &dbMember->value;
+            foundRows = true;
+          }
+        }
+
+        if (!foundScheme)
+        {
+          throw std::exception("Invalid Database JSON: \"scheme\" member not found");
+        }
+        if (!foundRows)
+        {
+          throw std::exception("Invalid Database JSON: \"rows\" member not found");
+        }
       }
     }
 
     /**
     */
-    void loadRows(const rapidjson::Value* root, Database* database)
+    void loadRows(Database* database)
     {
       // Scheme must have already been parsed by this point
       mDebugAssert(mScheme);
 
-      IFieldDescriptorConstListConstPtrH fieldDescriptors = 
-        mScheme->getFieldDescriptors();
-
-      if (!root->IsArray())
+      // If this is a new database, there aren't any rows
+      if (mRowDataRoot != NULL)
       {
-        std::string ex = "Invalid Database JSON: expected array, found ";
-        ex += jsonTypeToString(root->GetType());
-        throw std::exception(ex.c_str());
-      }
+        IFieldDescriptorConstListConstPtrH fieldDescriptors =
+          mScheme->getFieldDescriptors();
 
-      //
-      // Rows layed out as an array of arrays, with the fields sorted
-      // in order according to the scheme.
-      //
-      for (rapidjson::Value::ConstValueIterator row = root->Begin(); 
-        row != root->End(); ++row)
-      {
-        if (!row->IsArray())
+        if (!mRowDataRoot->IsArray())
         {
           std::string ex = "Invalid Database JSON: expected array, found ";
-          ex += jsonTypeToString(row->GetType());
+          ex += jsonTypeToString(mRowDataRoot->GetType());
           throw std::exception(ex.c_str());
-        } 
-
-        IRowPtrH newRow = database->createRow();
-
-        size_t fieldIdx = 0;
-        for (rapidjson::Value::ConstValueIterator jsonValue = row->Begin();
-          jsonValue != row->End(); ++jsonValue)
-        {
-          IFieldDescriptorConstPtrH field = (*fieldDescriptors)[fieldIdx];
-          ValuePtrH value = field->fromString(jsonValue->GetString());
-          newRow->setValue(field, value);
         }
 
-        if (!database->insert(newRow))
+        //
+        // Rows layed out as an array of arrays, with the fields sorted
+        // in order according to the scheme.
+        //
+        for (rapidjson::Value::ConstValueIterator row = mRowDataRoot->Begin();
+          row != mRowDataRoot->End(); ++row)
         {
-          throw std::exception("Invalid Database JSON: corrupt row");
+          if (!row->IsArray())
+          {
+            std::string ex = "Invalid Database JSON: expected array, found ";
+            ex += jsonTypeToString(row->GetType());
+            throw std::exception(ex.c_str());
+          }
+
+          IRowPtrH newRow = database->createRow();
+
+          size_t fieldIdx = 0;
+          for (rapidjson::Value::ConstValueIterator jsonValue = row->Begin();
+            jsonValue != row->End(); ++jsonValue, ++fieldIdx)
+          {
+            IFieldDescriptorConstPtrH field = (*fieldDescriptors)[fieldIdx];
+            ValuePtrH value = field->fromString(jsonValue->GetString());
+            newRow->setValue(field, value);
+          }
+
+          if (!database->insert(newRow))
+          {
+            throw std::exception("Invalid Database JSON: corrupt row");
+          }
         }
       }
     }
 
+    std::string mDatabaseFilename;
     rapidjson::Document mDatabase;
-    rapidjson::FileStream mDatabaseFile;
+    FILE* mDatabaseFileHandle;
 
     rapidjson::Value* mRowDataRoot;
 
@@ -531,37 +623,46 @@ SchemeJsonImpl* SchemeJson::getImpl() const
 /////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////
 
-DatabasePtrH DataStorageJson::Load(FILE* dbFile)
+DatabasePtrH DataStorageJson::Load(const char* dbFilename)
 {
-  IDataStoragePtrH existingStoragePtrH(new DataStorageJson(dbFile));
+  IDataStoragePtrH existingStoragePtrH(new DataStorageJson(dbFilename));
   DatabasePtrH db(new Database(existingStoragePtrH));
   return db;
 }
 
-DatabasePtrH DataStorageJson::Create(SchemeJsonConstPtrH scheme, FILE* emptyDbFile)
+DatabasePtrH DataStorageJson::Create(SchemeJsonConstPtrH scheme, const char* newDbFilename)
 {
-  IDataStoragePtrH newStoragePtrH(new DataStorageJson(scheme, emptyDbFile));
+  IDataStoragePtrH newStoragePtrH(new DataStorageJson(scheme, newDbFilename));
   DatabasePtrH newDb(new Database(newStoragePtrH));
 
   return newDb;
 }
 
-DatabasePtrH DataStorageJson::Create(FILE* schemeFile, FILE* emptyDbFile)
+DatabasePtrH DataStorageJson::Create(const char* schemeFilename, const char* newDbFilename)
 {
+  FILE* schemeFile = fopen(schemeFilename, "r");
+  if (!schemeFile)
+  {
+    std::string ex = "Unable to open scheme file \"";
+    ex += schemeFilename;
+    ex += +"\"";
+    throw std::exception(ex.c_str());
+  }
+
   SchemeJsonPtrH scheme(new SchemeJson(schemeFile));
-  IDataStoragePtrH newStoragePtrH(new DataStorageJson(scheme, emptyDbFile));
+  IDataStoragePtrH newStoragePtrH(new DataStorageJson(scheme, newDbFilename));
   DatabasePtrH newDb(new Database(newStoragePtrH));
 
   return newDb;
 }
 
-DataStorageJson::DataStorageJson(FILE* dbFile) :
-  mImpl(new DataStorageJsonImpl(dbFile))
+DataStorageJson::DataStorageJson(const char* existingDbFilename) :
+  mImpl(new DataStorageJsonImpl(existingDbFilename))
 {
 }
 
-DataStorageJson::DataStorageJson(SchemeJsonConstPtrH scheme, FILE* newDbFile) :
-  mImpl(new DataStorageJsonImpl(scheme, newDbFile))
+DataStorageJson::DataStorageJson(SchemeJsonConstPtrH scheme, const char* newDbFilename) :
+  mImpl(new DataStorageJsonImpl(scheme, newDbFilename))
 {
 }
 

@@ -18,7 +18,7 @@ namespace DataStore
     }
 
     template<typename T>
-    Value(const T& v) :
+    Value(T& v) :
       mValue(v)
     {
     }

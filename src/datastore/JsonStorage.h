@@ -99,9 +99,9 @@ namespace DataStore
   class DataStorageJson : public IDataStorage
   {
   public:
-    static DatabasePtrH Load(FILE* existingDbFile);
-    static DatabasePtrH Create(FILE* schemeJson, FILE* newdbFile);
-    static DatabasePtrH Create(SchemeJsonConstPtrH scheme, FILE* newDbFile);
+    static DatabasePtrH Load(const char* existingDbFilename);
+    static DatabasePtrH Create(const char* schemeFilename, const char* newDbFilename);
+    static DatabasePtrH Create(SchemeJsonConstPtrH scheme, const char* newDbFilename);
 
     ISchemeConstPtrH getScheme();
 
@@ -113,11 +113,12 @@ namespace DataStore
 
   private:
     /** Load an existing datastorage */
-    DataStorageJson(FILE* dbFile);
+    DataStorageJson(const char* existingDbFilename);
 
 
     /** Create a new datastorage, given a scheme */
-    DataStorageJson(SchemeJsonConstPtrH scheme, FILE* newDbFile);
+    DataStorageJson(SchemeJsonConstPtrH scheme,
+      const char* newDbFilename);
 
     DataStorageJsonImplPtrH mImpl;
   };

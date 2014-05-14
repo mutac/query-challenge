@@ -38,48 +38,43 @@ int main(int argc, char** argv)
     cmd.add(datastoreFileArg);
     cmd.parse(argc, argv);
 
-    bool isInCreateMode = createUsingSchemeArg.isSet();
-
-    FILE* schemeFile = NULL;
-    if (createUsingSchemeArg.isSet())
-    {
-      schemeFile = fopen(createUsingSchemeArg.getValue().c_str(), "r");
-      if (!schemeFile)
-      {
-        throw std::exception("Unable to open scheme file");
-      }
-    }
-
-    FILE* datastoreFile = fopen(datastoreFileArg.getValue().c_str(), "a+");
-    if (!datastoreFile)
-    {
-      throw std::exception("Unable to open datastorage file for reading & writing");
-    }
-
     //
     // Load or create the database
     //
 
+    bool isInCreateMode = createUsingSchemeArg.isSet();
+
     DataStore::DatabasePtrH database;
     if (isInCreateMode)
     {
-      database = DataStore::DataStorageJson::Create(schemeFile, datastoreFile);
-      std::cout << "Database \"" << datastoreFileArg.getValue() << "\" created" << std::endl;
+      database = DataStore::DataStorageJson::Create(
+        createUsingSchemeArg.getValue().c_str(),
+        datastoreFileArg.getValue().c_str());
+
+      std::cout << "Database \"" << datastoreFileArg.getValue() 
+        << "\" created" << std::endl;
+
+      // Exit
       return 0;
     }
     else
     {
-      database = DataStore::DataStorageJson::Load(datastoreFile);
+      database = DataStore::DataStorageJson::Load(datastoreFileArg.getValue().c_str());
     }
 
-    // Read from stdin by default
+    // Read from stdin by default, unless '-i' arg is specified
     std::ifstream inputFile;
     std::istream* input = &std::cin;
 
-    // unless '-i' arg is specified
-    if (!importFileArg.getValue().empty())
+    if (importFileArg.isSet())
     {
       inputFile.open(importFileArg.getValue().c_str(), std::fstream::in);
+      if (!inputFile.is_open())
+      {
+        std::string ex = "Unable to open input file \"" +
+          importFileArg.getValue() + "\"";
+        throw std::exception(ex.c_str());
+      }
       input = &inputFile;
     }
 

@@ -87,13 +87,29 @@ namespace mStd
   bool type_conversion(const DataStore::Date& from,
     const TypeInfo& toType, Variant* to)
   {
-    return false;
+    if (toType == DataStore::TypeInfo_String)
+    {
+      *to = from.toString();
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 
   template<>
   bool type_conversion(const DataStore::Time& from,
     const TypeInfo& toType, Variant* to)
   {
-    return false;
+    if (toType == DataStore::TypeInfo_String)
+    {
+      *to = from.toString();
+      return true;
+    }
+    else
+    {
+      return false;
+    }
   }
 }

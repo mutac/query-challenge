@@ -34,6 +34,13 @@ namespace DataStore
   class Database
   {
   public:
+    typedef enum
+    {
+      eResult_Unknown,
+      eResult_Replaced,
+      eResult_Inserted
+    } Result;
+
     Database(IDataStoragePtrH storage);
 
     // Create an in-memory only database
@@ -42,7 +49,7 @@ namespace DataStore
     ~Database();
 
     IRowPtrH createRow() const;
-    bool insert(IRowConstPtrH row);
+    bool insert(IRowConstPtrH row, Result* pResult = NULL);
 
     ISchemeConstPtrH getScheme() const;
 

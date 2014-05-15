@@ -164,15 +164,13 @@ namespace DataStore
 
     RowIdentifier lookupRow(const Predicate& pred) const
     {
-      // TODO: Fix RowIdentifier.. too weird
+      // RowIdentifier is kind of weird here...
       for (RowIdentifier::IdType id = 0; id < mRows.size(); ++id)
       {
         if (pred.matches(*mRows[id]))
         {
           return RowIdentifier(id);
         }
-
-        ++id;
       }
 
       return RowIdentifier::Empty();
@@ -259,8 +257,11 @@ void Database::persist()
   }
 }
 
-bool Database::insert(IRowConstPtrH row)
+bool Database::insert(IRowConstPtrH row, Result* pResult)
 {  
+  Result result = eResult_Unknown;
+  bool status = false;
+
   //
   // Create constraint that will match iff all key fields are exact
   //
@@ -279,14 +280,22 @@ bool Database::insert(IRowConstPtrH row)
   Predicate matchExactKeys(exactKeys);
 
   RowIdentifier found = mMemory->lookupRow(matchExactKeys);
-  if (!found.empty())
+  if (found.empty())
   {
-    return mMemory->replace(found, row);
+    result = eResult_Inserted;
+    status = mMemory->insert(row);
   }
   else
   {
-    return mMemory->insert(row);
+    result = eResult_Replaced;
+    status = mMemory->replace(found, row);
   }
+
+  if (pResult != NULL)
+  {
+    *pResult = result;
+  }
+  return status;
 }
 
 

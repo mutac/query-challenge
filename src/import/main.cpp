@@ -103,6 +103,9 @@ int main(int argc, char** argv)
       throw std::exception("Header does not match scheme");
     }
 
+    int replacedCount = 0;
+    int insertedCount = 0;
+
     for (std::string row; std::getline(*input, row);)
     {
       if (row.size() > 0)
@@ -154,7 +157,8 @@ int main(int argc, char** argv)
           ++fieldDescriptor;
         }
 
-        if (!database->insert(row))
+        DataStore::Database::Result insertionResult;
+        if (!database->insert(row, &insertionResult))
         {
           std::stringstream ex;
           ex << "Error inserting row at line " << line;
@@ -162,9 +166,17 @@ int main(int argc, char** argv)
           throw std::exception(str.c_str());
         }
 
+        if (insertionResult == DataStore::Database::eResult_Inserted)
+          ++insertedCount;
+        else if (insertionResult == DataStore::Database::eResult_Replaced)
+          ++replacedCount;
+
         ++line;
       }
     }
+
+    std::cout << "Inserted " << insertedCount << " new rows" << std::endl;
+    std::cout << "Replaced " << replacedCount << " existing rows" << std::endl;
   }
   catch (TCLAP::ArgException &e)
   {

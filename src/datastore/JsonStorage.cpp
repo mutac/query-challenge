@@ -263,7 +263,7 @@ namespace DataStore
           hasOneKey = true;
         }
 
-        // Names should be unique too probably...
+        // Field names should be unique too
       }
 
       if (!hasOneKey)
@@ -386,6 +386,9 @@ namespace DataStore
     */
     void endPersist()
     {
+      // This is a little silly.. You probably wouldn't want to overwrite
+      // the entire datastore each time.
+
       open(eOverwrite);
 
       rapidjson::FileStream dbFile(mDatabaseFileHandle);
@@ -536,6 +539,8 @@ namespace DataStore
             newRow->setValue(field, value);
           }
 
+          // Gets the job done, but could be more efficient
+          // this does an implicit search.
           if (!database->insert(newRow))
           {
             throw std::exception("Invalid Database JSON: corrupt row");

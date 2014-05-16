@@ -63,6 +63,8 @@ DataStore::IFieldDescriptorConstPtrH findFieldByName(const char* fieldName,
   }
 }
 
+/**
+*/
 DataStore::IFieldDescriptorConstListPtrH parseSelectExpression(const std::string& expression,
   const DataStore::IFieldDescriptorConstList* fields)
 {
@@ -192,7 +194,8 @@ int main(int argc, char** argv)
     DataStore::IFieldDescriptorConstListPtrH selectedFields;
     if (selectArg.isSet())
     {
-      selectedFields = parseSelectExpression(selectArg.getValue(), allFields.get());
+      selectedFields = parseSelectExpression(selectArg.getValue(), 
+        allFields.get());
     }
 
     //

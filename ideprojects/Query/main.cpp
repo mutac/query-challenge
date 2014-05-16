@@ -103,11 +103,13 @@ DataStore::IQualifierPtrH parseFilterExpression(const std::string& expression,
   // For now, only support FIELD="value"
   //
 
-  // Hack some reasonably large values
+  // Hack some reasonably large values and use sscanf as a quick & dirty parser
   char fieldName[64];
   char expectedValue[1024];
 
-  int parsedItems = sscanf(expression.c_str(), "%64[^=]=%1024s", fieldName, 
+  // Doesn't really work for all types of data, but should work for example
+  // data sets.
+  int parsedItems = sscanf(expression.c_str(), "%64[^=]=%1024[^\n]", fieldName, 
     expectedValue);
   if (parsedItems != 2)
   {
@@ -164,6 +166,27 @@ void printRow(const DataStore::IRow* row)
   }
 }
 
+void printFields(const DataStore::IFieldDescriptorConstList* fields)
+{
+  DataStore::IFieldDescriptorConstList::const_iterator field = fields->cbegin();
+
+  if (!fields->empty())
+  {
+    while (field != fields->cend())
+    {
+      std::cout << (*field)->getName();
+
+      ++field;
+      if (field != fields->cend())
+      {
+        std::cout << ",";
+      }
+    }
+
+    std::cout << std::endl;
+  }
+}
+
 /**
 */
 int main(int argc, char** argv)
@@ -171,10 +194,12 @@ int main(int argc, char** argv)
   try
   {
     TCLAP::CmdLine cmd("Query tool", ' ');
+    TCLAP::SwitchArg showArg("", "show", "Show fields and exit", false);
     TCLAP::ValueArg<std::string> selectArg("s", "select", "Comma separated list of field names to select, if omitted, all fields are selected", false, "", "Field selection");
     TCLAP::ValueArg<std::string> filterArg("f", "filter", "Filter expression in the form FIELDNAME=\"value\", filters selction", false, "", "Filter expression");
     TCLAP::ValueArg<std::string> orderArg("o", "order", "Comma separated list of field names with which to order a selection", false, "", "Order by");
     TCLAP::ValueArg<std::string> datastoreFileArg("d", "db", "JSON database file name to load or create", false, "db.json", "Database file");
+    cmd.add(showArg);
     cmd.add(selectArg);
     cmd.add(filterArg);
     cmd.add(orderArg);
@@ -188,6 +213,15 @@ int main(int argc, char** argv)
       database->getScheme()->getFieldDescriptors();
 
     //
+    // Show fields and exit?
+    //
+    if (showArg.isSet())
+    {
+      printFields(allFields.get());
+      return 0;
+    }
+
+    //
     // Translate selection (-s) switch into a list of field descriptors
     //
 
@@ -199,7 +233,7 @@ int main(int argc, char** argv)
     }
 
     //
-    // Parse filter expression
+    // Parse filter (-f) expression
     //
 
     DataStore::Predicate filter = DataStore::Predicate::AlwaysTrue();

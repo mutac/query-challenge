@@ -21,6 +21,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tests", "tests\tests.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Resource", "..\lib\resource\ideprojects\Resource\Resource\vs2013\Resource\Resource.vcxproj", "{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Query", "Query\Query.vcxproj", "{416CDB3A-B588-4361-9233-6FEFF6083104}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A986141E-3FA1-42E1-A865-6EEF5AB6A1A9} = {A986141E-3FA1-42E1-A865-6EEF5AB6A1A9}
+		{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B} = {D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -43,6 +49,10 @@ Global
 		{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}.Debug|Win32.Build.0 = Debug|Win32
 		{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}.Release|Win32.ActiveCfg = Release|Win32
 		{D0BAF4E7-CF7F-4ADB-A5ED-0D91141E0E1B}.Release|Win32.Build.0 = Release|Win32
+		{416CDB3A-B588-4361-9233-6FEFF6083104}.Debug|Win32.ActiveCfg = Debug|Win32
+		{416CDB3A-B588-4361-9233-6FEFF6083104}.Debug|Win32.Build.0 = Debug|Win32
+		{416CDB3A-B588-4361-9233-6FEFF6083104}.Release|Win32.ActiveCfg = Release|Win32
+		{416CDB3A-B588-4361-9233-6FEFF6083104}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -47,6 +47,7 @@ int main(int argc, char** argv)
     DataStore::DatabasePtrH database;
     if (isInCreateMode)
     {
+      // Create a new db 
       database = DataStore::DataStorageJson::Create(
         createUsingSchemeArg.getValue().c_str(),
         datastoreFileArg.getValue().c_str());
@@ -54,7 +55,7 @@ int main(int argc, char** argv)
       std::cout << "Database \"" << datastoreFileArg.getValue() 
         << "\" created" << std::endl;
 
-      // Exit
+      // and exit
       return 0;
     }
     else

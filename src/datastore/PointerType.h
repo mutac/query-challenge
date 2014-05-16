@@ -11,6 +11,7 @@ namespace DataStore
   {
     typedef std::shared_ptr<T> Shared;
     typedef std::shared_ptr<const T> SharedConst;
+    typedef std::unique_ptr<T> Unique;
   };
 }
 

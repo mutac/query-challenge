@@ -108,12 +108,12 @@ namespace DataStore
     };
 
     /**
-      Represents a read-only subset of fields within a row
+    Represents a read-only subset of fields within a row
     */
     class RowSelection : public IRow
     {
     public:
-      RowSelection(IFieldDescriptorConstListConstPtrH selectedFields, 
+      RowSelection(IFieldDescriptorConstListConstPtrH selectedFields,
         IRowConstPtrH row) :
         mSelectedFields(selectedFields),
         mRow(row)
@@ -158,6 +158,47 @@ namespace DataStore
       IFieldDescriptorConstListConstPtrH mSelectedFields;
     };
 
+    typedef PointerType<RowSelection>::Shared RowSelectionPtrH;
+    typedef PointerType<RowSelection>::SharedConst RowSelectionConstPtrH;
+
+    /**
+    */
+    class Selection : public ISelection
+    {
+    public:
+      Selection(IFieldDescriptorConstListConstPtrH selectedFields) :
+        mSelectedFields(selectedFields)
+      {
+      }
+
+      IFieldDescriptorConstListConstPtrH getFieldDescriptors() const
+      {
+        return mSelectedFields;
+      }
+
+      IRowConstPtrH operator[](size_t idx) const
+      {
+        return mSelectedRows[idx];
+      }
+
+      size_t size() const
+      {
+        return mSelectedRows.size();
+      }
+
+      void addRow(IRowConstPtrH row)
+      {
+        RowSelectionConstPtrH selectedRow(new RowSelection(mSelectedFields, row));
+        mSelectedRows.push_back(selectedRow);
+      }
+
+    private:
+      IFieldDescriptorConstListConstPtrH mSelectedFields;
+      std::vector<IRowConstPtrH> mSelectedRows;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     DatabaseInMemory()
     {
     }
@@ -202,6 +243,19 @@ namespace DataStore
       {
         storage->persistRow(row->get());
       }
+    }
+
+    ISelectionConstPtrH query(IFieldDescriptorConstListConstPtrH select)
+    {
+      Selection* selection = new Selection(select);
+
+      for (std::vector<IRowConstPtrH>::const_iterator row = mRows.cbegin();
+        row != mRows.cend(); ++row)
+      {
+        selection->addRow(*row);
+      }
+
+      return ISelectionConstPtrH(selection);
     }
 
   private:
@@ -296,6 +350,18 @@ bool Database::insert(IRowConstPtrH row, Result* pResult)
     *pResult = result;
   }
   return status;
+}
+
+ISelectionConstPtrH Database::query(IFieldDescriptorConstListConstPtrH select)
+{
+  if (!select || select->empty())
+  {
+    return mMemory->query(mScheme->getFieldDescriptors());
+  }
+  else
+  {
+    return mMemory->query(select);
+  }
 }
 
 

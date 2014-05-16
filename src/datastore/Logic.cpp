@@ -13,7 +13,16 @@ Predicate::Predicate(IQualifierPtrH qualifierRoot) :
 
 bool Predicate::matches(const IRow& row) const
 {
-  return mRoot->matches(row);
+  if (mRoot)
+    return mRoot->matches(row);
+  else
+    return true;
+}
+
+const Predicate& Predicate::AlwaysTrue()
+{
+  static Predicate always(NULL);
+  return always;
 }
 
 /////////////////////////////////////////////////////////////////////

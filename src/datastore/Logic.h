@@ -2,7 +2,7 @@
 #ifndef __LOGIC_H__
 #define __LOGIC_H__
 
-#include <datastore/Database.h>
+#include <datastore/Row.h>
 #include <datastore/PointerType.h>
 #include <vector>
 
@@ -60,14 +60,24 @@ namespace DataStore
   }
 
   /**
+    Forms the root of a logical expression tree that is used to match rows.  
+    By default (default ctor), a Predicate matches everything.
+
+    The distinction between an IQualifier and a Predicate is in place to
+    facilitate expression optimization (though not implemented)
   */
   class Predicate
   {
   public:
+    static const Predicate& AlwaysTrue();
+
+    Predicate() {}
     Predicate(IQualifierPtrH qualifierRoot);
-
-    bool matches(const IRow& row) const;
-
+    
+    /* default copy ctor okay */
+    /* default dtor okay */
+   
+    virtual bool matches(const IRow& row) const;
   private:
     IQualifierPtrH mRoot;
   };

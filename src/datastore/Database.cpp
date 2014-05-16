@@ -245,14 +245,19 @@ namespace DataStore
       }
     }
 
-    ISelectionConstPtrH query(IFieldDescriptorConstListConstPtrH select)
+    ISelectionConstPtrH query(
+      IFieldDescriptorConstListConstPtrH select,
+      const Predicate& filterConstraint)
     {
       Selection* selection = new Selection(select);
 
       for (std::vector<IRowConstPtrH>::const_iterator row = mRows.cbegin();
         row != mRows.cend(); ++row)
       {
-        selection->addRow(*row);
+        if (filterConstraint.matches(*(row->get())))
+        {
+          selection->addRow(*row);
+        }
       }
 
       return ISelectionConstPtrH(selection);
@@ -352,16 +357,21 @@ bool Database::insert(IRowConstPtrH row, Result* pResult)
   return status;
 }
 
-ISelectionConstPtrH Database::query(IFieldDescriptorConstListConstPtrH select)
+ISelectionConstPtrH Database::query(
+  IFieldDescriptorConstListConstPtrH selectFields,
+  const Predicate* filterConstraint)
 {
+  IFieldDescriptorConstListConstPtrH select = selectFields;
   if (!select || select->empty())
   {
-    return mMemory->query(mScheme->getFieldDescriptors());
+    select = mScheme->getFieldDescriptors();
   }
-  else
+
+  const Predicate* filter = &Predicate::AlwaysTrue();
+  if (filterConstraint != NULL)
   {
-    return mMemory->query(select);
+    filter = filterConstraint;
   }
+
+  return mMemory->query(select, *filter);
 }
-
-

@@ -4,8 +4,8 @@
 
 #include <datastore/Scheme.h>
 #include <datastore/DataStorage.h>
-#include <Resource/mString.h>
-#include <vector>
+#include <datastore/Row.h>
+#include <datastore/Logic.h>
 
 namespace DataStore
 {
@@ -13,23 +13,8 @@ namespace DataStore
   typedef PointerType<DatabaseInMemory>::Shared DatabaseInMemoryPtrH;
 
   /**
-  */
-  struct IRow
-  {
-    virtual ValueConstPtrH getValue(const IFieldDescriptor& field) const = 0;
-    virtual IFieldDescriptorConstListConstPtrH getFieldDescriptors() const = 0;
-
-    // The field is passed in a shared ptr so that the impl can hang on to it
-    // but that might not actually ever be necessary..  Consider changing to
-    // const ref like everything else.
-    virtual bool setValue(IFieldDescriptorConstPtrH field, 
-      ValuePtrH value) = 0;
-  };
-
-  typedef PointerType<IRow>::Shared IRowPtrH;
-  typedef PointerType<IRow>::SharedConst IRowConstPtrH;
-
-  /**
+   A selection of particular fields and rows from a database.
+   Outard appearance is similar to std::vector
   */
   struct ISelection
   {
@@ -66,7 +51,7 @@ namespace DataStore
         return !(mSelection == other.mSelection && mIdx == other.mIdx);
       }
 
-      IRowConstPtrH operator*() const
+      const IRowConstPtrH operator*() const
       {
         return (*mSelection)[mIdx];
       }
@@ -131,9 +116,12 @@ namespace DataStore
     bool insert(IRowConstPtrH row, Result* pResult = NULL);
 
     /**
-     If select is not specified (NULL), all fields are selected
+     If select is not specified (NULL), all fields are selected.
+     If filterConstraint is not specified (NULL), all rows are selected.
     */
-    ISelectionConstPtrH query(IFieldDescriptorConstListConstPtrH select);
+    ISelectionConstPtrH query(
+      IFieldDescriptorConstListConstPtrH select,
+      const Predicate* filterConstraint);
 
     /**
     */

@@ -17,6 +17,7 @@
     <ClInclude Include="..\..\src\datastore\JsonStorage.h" />
     <ClInclude Include="..\..\src\datastore\Logic.h" />
     <ClInclude Include="..\..\src\datastore\PointerType.h" />
+    <ClInclude Include="..\..\src\datastore\Row.h" />
     <ClInclude Include="..\..\src\datastore\Scheme.h" />
     <ClInclude Include="..\..\src\datastore\DataStorage.h" />
     <ClInclude Include="..\..\src\datastore\Value.h" />

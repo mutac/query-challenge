@@ -11,6 +11,26 @@
 #include <datastore/Database.h>
 #include <datastore/JsonStorage.h>
 
+/**
+*/
+struct fieldNameComparator :
+  public std::unary_function<DataStore::IFieldDescriptorConstPtrH, bool>
+{
+  explicit fieldNameComparator(const char* expected) :
+  mExpected(expected)
+  {
+  }
+
+  bool operator() (const DataStore::IFieldDescriptorConstPtrH& arg)
+  {
+    return mExpected == arg->getName();
+  }
+
+  std::string mExpected;
+};
+
+/**
+*/
 bool getStringValuesSeperatedBy(const char delim, 
   const std::string& row, std::vector<std::string>* outFields)
 {
@@ -25,6 +45,95 @@ bool getStringValuesSeperatedBy(const char delim,
   return true;
 }
 
+/**
+*/
+DataStore::IFieldDescriptorConstPtrH findFieldByName(const char* fieldName,
+  const DataStore::IFieldDescriptorConstList* fields)
+{
+  DataStore::IFieldDescriptorConstList::const_iterator found = std::find_if(fields->cbegin(),
+    fields->cend(), fieldNameComparator(fieldName));
+
+  if (found != fields->cend())
+  {
+    return *found;
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+DataStore::IFieldDescriptorConstListPtrH parseSelectExpression(const std::string& expression,
+  const DataStore::IFieldDescriptorConstList* fields)
+{
+
+  std::vector<std::string> fieldsToSelect;
+  getStringValuesSeperatedBy(',', expression, &fieldsToSelect);
+
+  DataStore::IFieldDescriptorConstListPtrH selectedFields
+    (new DataStore::IFieldDescriptorConstList());
+
+  for (std::vector<std::string>::const_iterator selectedFieldName = fieldsToSelect.cbegin();
+    selectedFieldName != fieldsToSelect.cend(); ++selectedFieldName)
+  {
+    DataStore::IFieldDescriptorConstPtrH selectedField =
+      findFieldByName(selectedFieldName->c_str(), fields);
+
+    if (!selectedField)
+    {
+      std::string ex = "Unrecognized field \"" + *selectedFieldName +
+        "\"" + " specified in selection";
+      throw std::exception(ex.c_str());
+    }
+
+    selectedFields->push_back(selectedField);
+  }
+
+  return selectedFields;
+}
+
+/**
+*/
+DataStore::IQualifierPtrH parseFilterExpression(const std::string& expression, 
+  const DataStore::IFieldDescriptorConstList* fields)
+{
+  //
+  // For now, only support FIELD="value"
+  //
+
+  // Hack some reasonably large values
+  char fieldName[64];
+  char expectedValue[1024];
+
+  int parsedItems = sscanf(expression.c_str(), "%64[^=]=%1024s", fieldName, 
+    expectedValue);
+  if (parsedItems != 2)
+  {
+    throw std::exception("Syntax error in filter expression");
+  }
+
+  DataStore::IFieldDescriptorConstPtrH field = findFieldByName(fieldName, fields);
+  if (!field)
+  {
+    std::string ex = "Unrecognized field \"";
+    ex += fieldName;
+    ex += "\" specified in filter expression";
+    throw std::exception(ex.c_str());
+  }
+
+  DataStore::ValuePtrH desiredValue = field->fromString(expectedValue);
+  if (!desiredValue)
+  {
+    std::string ex = "Syntax error in filter expression, value format is incorrect";
+    throw std::exception(ex.c_str());
+  }
+
+  DataStore::IQualifierPtrH exactMatch(new DataStore::Logic::Exact(field, desiredValue));
+  return exactMatch;
+}
+
+/**
+*/
 void printRow(const DataStore::IRow* row)
 {
   // don't really need to get the fields each time...
@@ -53,27 +162,14 @@ void printRow(const DataStore::IRow* row)
   }
 }
 
-struct fieldNameComparitor : public std::unary_function<DataStore::IFieldDescriptorConstPtrH, bool>
-{
-  explicit fieldNameComparitor(const std::string expected) :
-    mExpected(expected) 
-  {
-  }
-
-  bool operator() (const DataStore::IFieldDescriptorConstPtrH& arg)
-  {
-    return mExpected == arg->getName();
-  }
-
-  std::string mExpected;
-};
-
+/**
+*/
 int main(int argc, char** argv)
 {
   try
   {
     TCLAP::CmdLine cmd("Query tool", ' ');
-    TCLAP::ValueArg<std::string> selectArg("s", "select", "Comma separated list of field names to select", false, "", "Field selection");
+    TCLAP::ValueArg<std::string> selectArg("s", "select", "Comma separated list of field names to select, if omitted, all fields are selected", false, "", "Field selection");
     TCLAP::ValueArg<std::string> filterArg("f", "filter", "Filter expression in the form FIELDNAME=\"value\", filters selction", false, "", "Filter expression");
     TCLAP::ValueArg<std::string> orderArg("o", "order", "Comma separated list of field names with which to order a selection", false, "", "Order by");
     TCLAP::ValueArg<std::string> datastoreFileArg("d", "db", "JSON database file name to load or create", false, "db.json", "Database file");
@@ -86,43 +182,36 @@ int main(int argc, char** argv)
     DataStore::DatabasePtrH database = 
       DataStore::DataStorageJson::Load(datastoreFileArg.getValue().c_str());
 
+    DataStore::IFieldDescriptorConstListConstPtrH allFields =
+      database->getScheme()->getFieldDescriptors();
+
     //
     // Translate selection (-s) switch into a list of field descriptors
     //
 
-    std::vector<std::string> fieldsToSelect;
+    DataStore::IFieldDescriptorConstListPtrH selectedFields;
     if (selectArg.isSet())
     {
-      getStringValuesSeperatedBy(',', selectArg.getValue(), &fieldsToSelect);
+      selectedFields = parseSelectExpression(selectArg.getValue(), allFields.get());
     }
 
-    DataStore::IFieldDescriptorConstListConstPtrH allFields = 
-      database->getScheme()->getFieldDescriptors();
+    //
+    // Parse filter expression
+    //
 
-    DataStore::IFieldDescriptorConstListPtrH selectedFields
-      (new DataStore::IFieldDescriptorConstList());
-
-    for (std::vector<std::string>::const_iterator selectedFieldName = fieldsToSelect.cbegin();
-      selectedFieldName != fieldsToSelect.cend(); ++selectedFieldName)
+    DataStore::Predicate filter = DataStore::Predicate::AlwaysTrue();
+    if (filterArg.isSet())
     {
-      DataStore::IFieldDescriptorConstList::const_iterator found = std::find_if(allFields->cbegin(),
-        allFields->cend(), fieldNameComparitor(*selectedFieldName));
-
-      if (found == allFields->cend())
-      {
-        std::string ex = "Unrecognized field \"" + *selectedFieldName + 
-          "\"" + " specified in selection";
-        throw std::exception(ex.c_str());
-      }
-
-      selectedFields->push_back(*found);
+      DataStore::IQualifierPtrH filterAst = 
+        parseFilterExpression(filterArg.getValue(), allFields.get());
+      filter = DataStore::Predicate(filterAst);
     }
 
     //
     // Perform query, and print result
     //
 
-    DataStore::ISelectionConstPtrH result = database->query(selectedFields);
+    DataStore::ISelectionConstPtrH result = database->query(selectedFields, &filter);
 
     for (DataStore::ISelection::const_iterator row = result->cbegin(); 
       row != result->cend(); ++row)

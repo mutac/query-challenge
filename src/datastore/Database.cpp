@@ -1,7 +1,7 @@
 
 #include <datastore/Database.h>
 #include <datastore/Logic.h>
-#include <hash_map>
+#include <algorithm>
 
 using namespace DataStore;
 
@@ -46,11 +46,42 @@ namespace DataStore
   };
 
   /**
-    Bread-dead storage...
+    Bread-dead storage, stores entire database in memory using
+    vectors of rows.
   */
   class DatabaseInMemory
   {
   public:
+    /**
+      stl algorithm compatible comparison for a row (orders by
+      a single field)
+    */
+    struct IRowCompareLessThanByField
+    {
+      IRowCompareLessThanByField(const IFieldDescriptorConstList* byFields) :
+        mCompareField(byFields)
+      {
+      }
+
+      // going through the shared pointer here will make this slower
+      bool operator() (IRowConstPtrH left, IRowConstPtrH right)
+      {
+        for (IFieldDescriptorConstList::const_iterator field = mCompareField->cbegin();
+          field != mCompareField->cend(); ++field)
+        {
+          const ValueConstPtrH leftValue = left->getValue(*field->get());
+          const ValueConstPtrH rightValue = right->getValue(*field->get());
+
+          if (!((*leftValue) < (*rightValue)))
+            return false;
+        }
+
+        return true;
+      }
+
+    private:
+      const IFieldDescriptorConstList* mCompareField;
+    };
 
     /**
       A bit of an assumption here is that the IFieldDescriptor id can be
@@ -192,6 +223,16 @@ namespace DataStore
         mSelectedRows.push_back(selectedRow);
       }
 
+      void orderBy(const IFieldDescriptorConstList* orderByFields)
+      {
+        if (orderByFields)
+        {
+          std::sort(mSelectedRows.begin(),
+            mSelectedRows.end(),
+            IRowCompareLessThanByField(orderByFields));
+        }
+      }
+
     private:
       IFieldDescriptorConstListConstPtrH mSelectedFields;
       std::vector<IRowConstPtrH> mSelectedRows;
@@ -247,17 +288,25 @@ namespace DataStore
 
     ISelectionConstPtrH query(
       IFieldDescriptorConstListConstPtrH select,
-      const Predicate& filterConstraint)
+      const Predicate* filterConstraint,
+      IFieldDescriptorConstListConstPtrH orderBy)
     {
       Selection* selection = new Selection(select);
 
       for (std::vector<IRowConstPtrH>::const_iterator row = mRows.cbegin();
         row != mRows.cend(); ++row)
       {
-        if (filterConstraint.matches(*(row->get())))
+        if (filterConstraint->matches(*(row->get())))
         {
           selection->addRow(*row);
         }
+      }
+
+      // For simplicity, delegate the sorting
+      // to the selection object.
+      if (orderBy)
+      {
+        selection->orderBy(orderBy.get());
       }
 
       return ISelectionConstPtrH(selection);
@@ -359,7 +408,8 @@ bool Database::insert(IRowConstPtrH row, Result* pResult)
 
 ISelectionConstPtrH Database::query(
   IFieldDescriptorConstListConstPtrH selectFields,
-  const Predicate* filterConstraint)
+  const Predicate* filterConstraint,
+  IFieldDescriptorConstListConstPtrH orderBy)
 {
   IFieldDescriptorConstListConstPtrH select = selectFields;
   if (!select || select->empty())
@@ -373,5 +423,5 @@ ISelectionConstPtrH Database::query(
     filter = filterConstraint;
   }
 
-  return mMemory->query(select, *filter);
+  return mMemory->query(select, filter, orderBy);
 }

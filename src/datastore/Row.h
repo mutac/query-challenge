@@ -3,6 +3,7 @@
 #define __ROW_H__
 
 #include <datastore/FieldDescriptor.h>
+#include <datastore/Value.h>
 #include <datastore/PointerType.h>
 
 namespace DataStore

@@ -118,10 +118,12 @@ namespace DataStore
     /**
      If select is not specified (NULL), all fields are selected.
      If filterConstraint is not specified (NULL), all rows are selected.
+     if orderBy is not specified (NULL), the order is undefined.
     */
     ISelectionConstPtrH query(
       IFieldDescriptorConstListConstPtrH select,
-      const Predicate* filterConstraint);
+      const Predicate* filterConstraint,
+      IFieldDescriptorConstListConstPtrH orderBy);
 
     /**
     */

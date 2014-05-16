@@ -13,10 +13,10 @@
 
 /**
 */
-struct fieldNameComparator :
+struct fieldNameCompareEquals :
   public std::unary_function<DataStore::IFieldDescriptorConstPtrH, bool>
 {
-  explicit fieldNameComparator(const char* expected) :
+  explicit fieldNameCompareEquals(const char* expected) :
   mExpected(expected)
   {
   }
@@ -51,7 +51,7 @@ DataStore::IFieldDescriptorConstPtrH findFieldByName(const char* fieldName,
   const DataStore::IFieldDescriptorConstList* fields)
 {
   DataStore::IFieldDescriptorConstList::const_iterator found = std::find_if(fields->cbegin(),
-    fields->cend(), fieldNameComparator(fieldName));
+    fields->cend(), fieldNameCompareEquals(fieldName));
 
   if (found != fields->cend())
   {
@@ -65,7 +65,7 @@ DataStore::IFieldDescriptorConstPtrH findFieldByName(const char* fieldName,
 
 /**
 */
-DataStore::IFieldDescriptorConstListPtrH parseSelectExpression(const std::string& expression,
+DataStore::IFieldDescriptorConstListPtrH parseFieldNameList(const std::string& expression,
   const DataStore::IFieldDescriptorConstList* fields)
 {
 
@@ -84,7 +84,7 @@ DataStore::IFieldDescriptorConstListPtrH parseSelectExpression(const std::string
     if (!selectedField)
     {
       std::string ex = "Unrecognized field \"" + *selectedFieldName +
-        "\"" + " specified in selection";
+        "\"" + " specified in list";
       throw std::exception(ex.c_str());
     }
 
@@ -222,18 +222,18 @@ int main(int argc, char** argv)
     }
 
     //
-    // Translate selection (-s) switch into a list of field descriptors
+    // Parse selection (-s) into a list of field descriptors
     //
 
     DataStore::IFieldDescriptorConstListPtrH selectedFields;
     if (selectArg.isSet())
     {
-      selectedFields = parseSelectExpression(selectArg.getValue(), 
+      selectedFields = parseFieldNameList(selectArg.getValue(), 
         allFields.get());
     }
 
     //
-    // Parse filter (-f) expression
+    // Parse filter (-f) expression into a logical expression AST
     //
 
     DataStore::Predicate filter = DataStore::Predicate::AlwaysTrue();
@@ -245,10 +245,23 @@ int main(int argc, char** argv)
     }
 
     //
+    // Parse order (-o) in to list of field descriptors, order is
+    // always ascending.
+    //
+
+    DataStore::IFieldDescriptorConstListPtrH orderByFields;
+    if (orderArg.isSet())
+    {
+      orderByFields = parseFieldNameList(orderArg.getValue(), 
+        allFields.get());
+    }
+
+    //
     // Perform query, and print result
     //
 
-    DataStore::ISelectionConstPtrH result = database->query(selectedFields, &filter);
+    DataStore::ISelectionConstPtrH result = database->query(selectedFields,
+      &filter, orderByFields);
 
     for (DataStore::ISelection::const_iterator row = result->cbegin(); 
       row != result->cend(); ++row)

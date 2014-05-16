@@ -46,6 +46,14 @@ namespace DataStore
     {
       return other.mDate != mDate;
     }
+    bool operator<(const Date& other) const
+    {
+      return mDate < other.mDate;
+    }
+    bool operator>(const Date& other) const
+    {
+      return mDate > other.mDate;
+    }
 
   private:
     // Could use smaller type
@@ -66,13 +74,21 @@ namespace DataStore
     bool fromString(const char* str);
     mStd::mString toString() const;
 
-    const bool operator==(const Time& other) const
+    bool operator==(const Time& other) const
     {
       return other.mTime == mTime;
     }
-    const bool operator!=(const Time& other) const
+    bool operator!=(const Time& other) const
     {
       return other.mTime != mTime;
+    }
+    bool operator<(const Time& other) const
+    {
+      return mTime < other.mTime;
+    }
+    bool operator>(const Time& other) const
+    {
+      return mTime > other.mTime;
     }
 
   private:

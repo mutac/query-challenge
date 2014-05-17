@@ -33,6 +33,11 @@ namespace DataStore
       return mValue == other.mValue;
     }
 
+    bool operator!=(const Value& other) const
+    {
+      return !(mValue == other.mValue);
+    }
+
     bool operator<(const Value& other) const
     {
       return mValue < other.mValue;

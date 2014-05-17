@@ -53,18 +53,19 @@ namespace DataStore
   {
   public:
     /**
-      stl algorithm compatible comparison for a row (orders by
-      a single field)
+      stl algorithm compatible comparison for sorting a row by a subset of fields
+      in ascending order.  The order in which the fields appear in the descriptor
+      list imply sorting priority.
     */
-    struct IRowCompareLessThanByField
+    struct IRowOrderByFieldsAscending
     {
-      IRowCompareLessThanByField(const IFieldDescriptorConstList* byFields) :
+      IRowOrderByFieldsAscending(const IFieldDescriptorConstList* byFields) :
         mCompareField(byFields)
       {
       }
 
       // going through the shared pointer here will make this slower
-      bool operator() (IRowConstPtrH left, IRowConstPtrH right)
+      bool operator() (IRowConstPtrH& left, IRowConstPtrH& right)
       {
         for (IFieldDescriptorConstList::const_iterator field = mCompareField->cbegin();
           field != mCompareField->cend(); ++field)
@@ -72,11 +73,16 @@ namespace DataStore
           const ValueConstPtrH leftValue = left->getValue(*field->get());
           const ValueConstPtrH rightValue = right->getValue(*field->get());
 
-          if (!((*leftValue) < (*rightValue)))
+          // If a field is less than the other, and all previously compared fields
+          // are equal, then the whole row is considered 'less than' an the other.
+
+          if (*leftValue < *rightValue)
+            return true;
+          if (*leftValue != *rightValue)
             return false;
         }
 
-        return true;
+        return false;
       }
 
     private:
@@ -229,7 +235,7 @@ namespace DataStore
         {
           std::sort(mSelectedRows.begin(),
             mSelectedRows.end(),
-            IRowCompareLessThanByField(orderByFields));
+            IRowOrderByFieldsAscending(orderByFields));
         }
       }
 

@@ -37,9 +37,9 @@ the matrix,2014-04-02,4
 the hobbit,2014-04-02,8
 unbreakable,2014-04-03,6
 
-$ ./Query.exe -d db.json -s TITLE,DATE,REV -o DATE -f REV=4.0
-the matrix,2014-04-01,4
-the matrix,2014-04-02,4
+$ ./Query.exe -d db.json -s TITLE,DATE -o DATE -f REV=4.0
+the matrix,2014-04-01
+the matrix,2014-04-02
 ```
 
 # Problem Description

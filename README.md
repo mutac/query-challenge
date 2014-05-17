@@ -1,4 +1,9 @@
-1.) Importer and Datastore
+# Overview
+
+
+# Problem Description
+
+1. Importer and Datastore
 
   You will be provided with a pipe separated file in the following format.
 
@@ -23,11 +28,12 @@
     Your first task is to parse and import the file into a simple datastore.  You may use any file format that you want to implement to store the data.  Records in the datastore should be unique by STB, TITLE and DATE.  Subsequent imports with the same logical record should overwrite the earlier records.
 
 
-2.) Query tool
+2. Query tool
 
-  2.1) select, order and filter
+2.1 select, order and filter
     The next task is to create a simple query tool that can execute simple queries against the datastore you created in step one.  The tool should accept command line args for SELECT, ORDER and FILTER functions something along the lines of:
 
+```
     $ ./query -s TITLE,REV,DATE -o DATE,TITLE
 
     the matrix,4.00,2014-04-01
@@ -38,9 +44,9 @@
     $ ./query -s TITLE,REV,DATE -f DATE=2014-04-01
 
     the matrix,4.00,2014-04-01
+```
 
-
-  2.2) group and aggregate functions
+  2.2 group and aggregate functions
     The next step is to add group by and aggregate functions to your query tool.  Your tool should support the following aggregates:
 
     MIN: select the minimum value from a column
@@ -49,26 +55,28 @@
     COUNT: count the distinct values in a column
     COLLECT: collect the distinct values in a column
 
+```
     $ ./query -s TITLE,REV:sum,STB:collect -g TITLE
 
     the matrix,8.00,[stb1,stb3]
     the hobbit,8.00,[stb2]
     unbreakable,6.00,[stb1]
+```
 
-
-  2.3) advanced filter function
+  2.3 advanced filter function
 
     Add a filter function which evaluates boolean AND and OR expressions in the following format:
 
-      STB="stb1" AND TITLE="the hobbit" OR TITLE="unbreakable"
+      ```STB="stb1" AND TITLE="the hobbit" OR TITLE="unbreakable"```
 
     Assume AND has higher precedence than OR.  Parens can be added to change the above statement to the more logical:
 
-      STB="stb1" AND (TITLE="the hobbit" OR TITLE="unbreakable")
+      ```STB="stb1" AND (TITLE="the hobbit" OR TITLE="unbreakable")```
 
-     Example:
+```
   $ ./query -s TITLE,REV -f 'TITLE="the hobbit" OR TITLE="the matrix"'
 
 the matrix,4.00
 the hobbit,8.00
 the matrix,4.00
+```

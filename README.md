@@ -1,5 +1,7 @@
 # Overview
 
+Sections 1 and 2.1 of the Problem Description are implemented by this project in C++.
+
 ## Build
 
 1. Clone repository and submodules

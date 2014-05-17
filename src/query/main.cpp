@@ -31,7 +31,7 @@ struct fieldNameCompareEquals :
 
 /**
 */
-bool getStringValuesSeperatedBy(const char delim, 
+bool getStringValuesSeparatedBy(const char delim, 
   const std::string& row, std::vector<std::string>* outFields)
 {
   outFields->clear();
@@ -70,7 +70,7 @@ DataStore::IFieldDescriptorConstListPtrH parseFieldNameList(const std::string& e
 {
 
   std::vector<std::string> fieldsToSelect;
-  getStringValuesSeperatedBy(',', expression, &fieldsToSelect);
+  getStringValuesSeparatedBy(',', expression, &fieldsToSelect);
 
   DataStore::IFieldDescriptorConstListPtrH selectedFields
     (new DataStore::IFieldDescriptorConstList());

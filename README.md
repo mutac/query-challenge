@@ -1,5 +1,28 @@
 # Overview
 
+## Build
+
+1. Clone repository and submodules
+```
+$ git clone --recursive git@github.com:mutac/query-challenge.git
+```
+2. Launch Visual Studio 2013 solution located in query-challenge/ideprojects/
+3. Build the solution (this builds Import.exe and Query.exe in query-challenge/examples)
+
+## Usage
+
+1. From a shell, cd to query-challenge/examples
+2. Create an initial database using the provided scheme:
+```
+$ ./Import.exe -c Scheme.json -d db.json
+Database "db.json" created
+```
+3. Import some data:
+```
+$ ./Import.exe -d db.json -i Example1.txt
+Inserted 4 new rows
+Replaced 0 existing rows
+```
 
 # Problem Description
 
@@ -26,7 +49,6 @@
 ```
 
 Your first task is to parse and import the file into a simple datastore.  You may use any file format that you want to implement to store the data.  Records in the datastore should be unique by STB, TITLE and DATE.  Subsequent imports with the same logical record should overwrite the earlier records.
-
 
 2. Query tool
 

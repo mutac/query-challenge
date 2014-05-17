@@ -3,9 +3,7 @@
 ## Build
 
 1. Clone repository and submodules
-```
-$ git clone --recursive git@github.com:mutac/query-challenge.git
-```
+```$ git clone --recursive git@github.com:mutac/query-challenge.git```
 2. Launch Visual Studio 2013 solution located in query-challenge/ideprojects/
 3. Build the solution (this builds Import.exe and Query.exe in query-challenge/examples)
 
@@ -17,7 +15,7 @@ $ git clone --recursive git@github.com:mutac/query-challenge.git
 $ ./Import.exe -c Scheme.json -d db.json
 Database "db.json" created
 ```
-3. Import some data:
+3. Import some data (if -i is omitted, Import.exe reads from stdin)
 ```
 $ ./Import.exe -d db.json -i Example1.txt
 Inserted 4 new rows

@@ -3,7 +3,9 @@
 ## Build
 
 1. Clone repository and submodules
-```$ git clone --recursive git@github.com:mutac/query-challenge.git```
+```
+$ git clone --recursive git@github.com:mutac/query-challenge.git
+```
 2. Launch Visual Studio 2013 solution located in query-challenge/ideprojects/
 3. Build the solution (this builds Import.exe and Query.exe in query-challenge/examples)
 
@@ -20,6 +22,24 @@ Database "db.json" created
 $ ./Import.exe -d db.json -i Example1.txt
 Inserted 4 new rows
 Replaced 0 existing rows
+```
+4. Query the data using Query.exe
+```
+$ ./Query.exe -d db.json -s TITLE,DATE
+the matrix,2014-04-01
+unbreakable,2014-04-03
+the hobbit,2014-04-02
+the matrix,2014-04-02
+
+$ ./Query.exe -d db.json -s TITLE,DATE,REV -o DATE,REV
+the matrix,2014-04-01,4
+the matrix,2014-04-02,4
+the hobbit,2014-04-02,8
+unbreakable,2014-04-03,6
+
+$ ./Query.exe -d db.json -s TITLE,DATE,REV -o DATE -f REV=4.0
+the matrix,2014-04-01,4
+the matrix,2014-04-02,4
 ```
 
 # Problem Description

@@ -145,7 +145,7 @@ int main(int argc, char** argv)
             throw std::exception(str.c_str());
           }
 
-          if (!row->setValue(*fieldDescriptor, value))
+          if (!row->setValue(*(fieldDescriptor->get()), value))
           {
             std::stringstream ex;
             ex << "Unable to add value to row at field \"" << (*fieldDescriptor)->getName()
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
           ++fieldDescriptor;
         }
 
-        DataStore::Database::Result insertionResult;
+        DataStore::Database::InsertionResult insertionResult;
         if (!database->insert(row, &insertionResult))
         {
           std::stringstream ex;
@@ -167,9 +167,9 @@ int main(int argc, char** argv)
           throw std::exception(str.c_str());
         }
 
-        if (insertionResult == DataStore::Database::eResult_Inserted)
+        if (insertionResult == DataStore::Database::eInsertionResult_Inserted)
           ++insertedCount;
-        else if (insertionResult == DataStore::Database::eResult_Replaced)
+        else if (insertionResult == DataStore::Database::eInsertionResult_Replaced)
           ++replacedCount;
 
         ++line;

@@ -55,13 +55,15 @@ namespace Tests
         DataStore::ValuePtrH valueValue = valueField->fromString("42.0");
         Assert::IsFalse(valueField->isKey());
 
-        added = newRow->setValue(keyField, keyValue);
+        added = newRow->setValue(*(keyField.get()), keyValue);
         Assert::IsTrue(added);
-        added = newRow->setValue(valueField, valueValue);
+        added = newRow->setValue(*(valueField.get()), valueValue);
         Assert::IsTrue(added);
 
-        inserted = database.insert(newRow);
+        DataStore::Database::InsertionResult insertionResult = DataStore::Database::eInsertionResult_Unknown;
+        inserted = database.insert(newRow, &insertionResult);
         Assert::IsTrue(inserted);
+        Assert::IsTrue(DataStore::Database::eInsertionResult_Inserted == insertionResult);
 
         //
         // Insert another row that has the same key value, 
@@ -77,17 +79,26 @@ namespace Tests
         valueValue = valueField->fromString("84.84");
         Assert::IsFalse(valueField->isKey());
 
-        added = newRow->setValue(keyField, keyValue);
+        added = newRow->setValue(*(keyField.get()), keyValue);
         Assert::IsTrue(added);
-        added = newRow->setValue(valueField, valueValue);
+        added = newRow->setValue(*(valueField.get()), valueValue);
         Assert::IsTrue(added);
 
-        inserted = database.insert(newRow);
+        //
+        // Verify previous record was replaced
+        //
+
+        insertionResult = DataStore::Database::eInsertionResult_Unknown;
+        inserted = database.insert(newRow, &insertionResult);
         Assert::IsTrue(inserted);
+        Assert::IsTrue(DataStore::Database::eInsertionResult_Replaced == insertionResult);
 
-        // Need to be able to query the databse back and see if the row
-        // was replaced
-        Assert::Fail(L"Not fully implemented");
+        DataStore::IQueryResultConstPtrH result = database.query();
+        Assert::AreEqual((size_t)1, result->size());
+
+        DataStore::IRowConstPtrH row = (*result)[0];
+        DataStore::ValueConstPtrH replacedValue = row->getValue(*(valueField.get()));
+        Assert::IsTrue(*valueValue == *replacedValue);
       }
       catch (std::exception& ex)
       {

@@ -16,7 +16,7 @@ namespace DataStore
    A selection of particular fields and rows from a database.
    Outard appearance is similar to std::vector
   */
-  struct ISelection
+  struct IQueryResult
   {
     /**
     */
@@ -28,8 +28,8 @@ namespace DataStore
       {
       }
 
-      const_iterator(size_t startIdx, const ISelection* selection) :
-        mIdx(startIdx), mSelection(selection)
+      const_iterator(size_t startIdx, const IQueryResult* selection) :
+        mIdx(startIdx), mResult(selection)
       {
       }
 
@@ -43,43 +43,47 @@ namespace DataStore
 
       bool operator==(const const_iterator& other) const
       {
-        return mSelection == other.mSelection && mIdx == other.mIdx;
+        return mResult == other.mResult && mIdx == other.mIdx;
       }
 
       bool operator!=(const const_iterator& other) const
       {
-        return !(mSelection == other.mSelection && mIdx == other.mIdx);
+        return !(mResult == other.mResult && mIdx == other.mIdx);
       }
 
       const IRowConstPtrH operator*() const
       {
-        return (*mSelection)[mIdx];
+        return (*mResult)[mIdx];
       }
 
     private:
       size_t mIdx;
-      const ISelection* mSelection;
+      const IQueryResult* mResult;
     };
 
     ///////////////////////////////////////////////////////////////////////
 
+    /** Returns fields that selected within result */
     virtual IFieldDescriptorConstListConstPtrH getFieldDescriptors() const = 0;
+
+    /** Return the ith result */
     virtual IRowConstPtrH operator[](size_t idx) const = 0;
+
+    /** Returns total number of results */
     virtual size_t size() const = 0;
 
     inline const_iterator cbegin() const
     {
       return const_iterator(0, this);
     }
-
     inline const_iterator cend() const
     {
       return const_iterator(size(), this);
     }
   };
 
-  typedef PointerType<ISelection>::Shared ISelectionPtrH;
-  typedef PointerType<ISelection>::SharedConst ISelectionConstPtrH;
+  typedef PointerType<IQueryResult>::Shared IQueryResultPtrH;
+  typedef PointerType<IQueryResult>::SharedConst IQueryResultConstPtrH;
 
   /**
   */
@@ -91,10 +95,10 @@ namespace DataStore
     */
     typedef enum
     {
-      eResult_Unknown,
-      eResult_Replaced,
-      eResult_Inserted
-    } Result;
+      eInsertionResult_Unknown,
+      eInsertionResult_Replaced,
+      eInsertionResult_Inserted
+    } InsertionResult;
 
     /**
       Creates a database with a storage-back
@@ -113,17 +117,17 @@ namespace DataStore
 
     /** Insert row into database.  A duplicate row will be replaced
     */
-    bool insert(IRowConstPtrH row, Result* pResult = NULL);
+    bool insert(IRowConstPtrH row, InsertionResult* pResult = NULL);
 
     /**
      If select is not specified (NULL), all fields are selected.
      If filterConstraint is not specified (NULL), all rows are selected.
      if orderBy is not specified (NULL), the order is undefined.
     */
-    ISelectionConstPtrH query(
-      IFieldDescriptorConstListConstPtrH select,
-      const Predicate* filterConstraint,
-      IFieldDescriptorConstListConstPtrH orderBy);
+    IQueryResultConstPtrH query(
+      IFieldDescriptorConstListConstPtrH select = NULL,
+      const Predicate* filterConstraint = NULL,
+      IFieldDescriptorConstListConstPtrH orderBy = NULL);
 
     /**
     */

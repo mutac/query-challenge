@@ -48,12 +48,12 @@ bool getStringValuesSeperatedBy(const char delim,
 /**
 */
 DataStore::IFieldDescriptorConstPtrH findFieldByName(const char* fieldName,
-  const DataStore::IFieldDescriptorConstList* fields)
+  const DataStore::IFieldDescriptorConstList& fields)
 {
-  DataStore::IFieldDescriptorConstList::const_iterator found = std::find_if(fields->cbegin(),
-    fields->cend(), fieldNameCompareEquals(fieldName));
+  DataStore::IFieldDescriptorConstList::const_iterator found = std::find_if(fields.cbegin(),
+    fields.cend(), fieldNameCompareEquals(fieldName));
 
-  if (found != fields->cend())
+  if (found != fields.cend())
   {
     return *found;
   }
@@ -66,7 +66,7 @@ DataStore::IFieldDescriptorConstPtrH findFieldByName(const char* fieldName,
 /**
 */
 DataStore::IFieldDescriptorConstListPtrH parseFieldNameList(const std::string& expression,
-  const DataStore::IFieldDescriptorConstList* fields)
+  const DataStore::IFieldDescriptorConstList& fields)
 {
 
   std::vector<std::string> fieldsToSelect;
@@ -97,7 +97,7 @@ DataStore::IFieldDescriptorConstListPtrH parseFieldNameList(const std::string& e
 /**
 */
 DataStore::IQualifierPtrH parseFilterExpression(const std::string& expression, 
-  const DataStore::IFieldDescriptorConstList* fields)
+  const DataStore::IFieldDescriptorConstList& fields)
 {
   //
   // For now, only support FIELD="value"
@@ -138,25 +138,18 @@ DataStore::IQualifierPtrH parseFilterExpression(const std::string& expression,
 
 /**
 */
-void printRow(const DataStore::IRow* row)
+void printFields(const DataStore::IFieldDescriptorConstList& fields)
 {
-  // don't really need to get the fields each time...
-  DataStore::IFieldDescriptorConstListConstPtrH fields = row->getFieldDescriptors();
-  DataStore::IFieldDescriptorConstList::const_iterator field = fields->cbegin();
+  DataStore::IFieldDescriptorConstList::const_iterator field = fields.cbegin();
 
-  if (!fields->empty())
+  if (!fields.empty())
   {
-    while (field != fields->cend())
+    while (field != fields.cend())
     {
-      DataStore::ValueConstPtrH v = row->getValue(*(field->get()));
-
-      mStd::mString strValue("");
-      v->getValue().convertTo(&strValue);
-
-      std::cout << strValue.c_str();
+      std::cout << (*field)->getName();
 
       ++field;
-      if (field != fields->cend())
+      if (field != fields.cend())
       {
         std::cout << ",";
       }
@@ -166,24 +159,38 @@ void printRow(const DataStore::IRow* row)
   }
 }
 
-void printFields(const DataStore::IFieldDescriptorConstList* fields)
+/**
+*/
+void printResult(const DataStore::IQueryResult& result)
 {
-  DataStore::IFieldDescriptorConstList::const_iterator field = fields->cbegin();
+  DataStore::IFieldDescriptorConstListConstPtrH fields = result.getFieldDescriptors();
 
-  if (!fields->empty())
+  for (DataStore::IQueryResult::const_iterator row = result.cbegin();
+    row != result.cend(); ++row)
   {
-    while (field != fields->cend())
+    DataStore::IFieldDescriptorConstList::const_iterator field = fields->cbegin();
+
+    if (!fields->empty())
     {
-      std::cout << (*field)->getName();
-
-      ++field;
-      if (field != fields->cend())
+      while (field != fields->cend())
       {
-        std::cout << ",";
-      }
-    }
+        DataStore::ValueConstPtrH v = (*row)->getValue(*(field->get()));
 
-    std::cout << std::endl;
+        mStd::mString strValue("");
+        if (v)
+          v->getValue().convertTo(&strValue);
+
+        std::cout << strValue.c_str();
+
+        ++field;
+        if (field != fields->cend())
+        {
+          std::cout << ",";
+        }
+      }
+
+      std::cout << std::endl;
+    }
   }
 }
 
@@ -217,7 +224,7 @@ int main(int argc, char** argv)
     //
     if (showArg.isSet())
     {
-      printFields(allFields.get());
+      printFields(*(allFields.get()));
       return 0;
     }
 
@@ -229,7 +236,7 @@ int main(int argc, char** argv)
     if (selectArg.isSet())
     {
       selectedFields = parseFieldNameList(selectArg.getValue(), 
-        allFields.get());
+        *(allFields.get()));
     }
 
     //
@@ -240,7 +247,7 @@ int main(int argc, char** argv)
     if (filterArg.isSet())
     {
       DataStore::IQualifierPtrH filterAst = 
-        parseFilterExpression(filterArg.getValue(), allFields.get());
+        parseFilterExpression(filterArg.getValue(), *(allFields.get()));
       filter = DataStore::Predicate(filterAst);
     }
 
@@ -253,21 +260,16 @@ int main(int argc, char** argv)
     if (orderArg.isSet())
     {
       orderByFields = parseFieldNameList(orderArg.getValue(), 
-        allFields.get());
+        *(allFields.get()));
     }
 
     //
     // Perform query, and print result
     //
 
-    DataStore::ISelectionConstPtrH result = database->query(selectedFields,
-      &filter, orderByFields);
-
-    for (DataStore::ISelection::const_iterator row = result->cbegin(); 
-      row != result->cend(); ++row)
-    {
-      printRow((*row).get());
-    }
+    DataStore::IQueryResultConstPtrH result = 
+      database->query(selectedFields, &filter, orderByFields);
+    printResult(*(result.get()));
   }
   catch (TCLAP::ArgException &e)
   {

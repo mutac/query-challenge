@@ -351,7 +351,7 @@ namespace DataStore
 
         rapidjson::Value jsonRow(rapidjson::kArrayType);
 
-        IFieldDescriptorConstListConstPtrH fields = row->getFieldDescriptors();
+        IFieldDescriptorConstListConstPtrH fields = mScheme->getFieldDescriptors();
         for (IFieldDescriptorConstList::const_iterator field = fields->cbegin();
           field != fields->cend(); ++field)
         {
@@ -536,7 +536,7 @@ namespace DataStore
           {
             IFieldDescriptorConstPtrH field = (*fieldDescriptors)[fieldIdx];
             ValuePtrH value = field->fromString(jsonValue->GetString());
-            newRow->setValue(field, value);
+            newRow->setValue(*(field.get()), value);
           }
 
           // Gets the job done, but could be more efficient

@@ -81,7 +81,7 @@ namespace DataStore
     */
     struct IRowOrderByFieldsAscending
     {
-      IRowOrderByFieldsAscending(const IFieldDescriptorConstList* byFields) :
+      IRowOrderByFieldsAscending(const IFieldDescriptorConstList& byFields) :
         mCompareField(byFields)
       {
       }
@@ -89,20 +89,11 @@ namespace DataStore
       // going through the shared pointer here will make this slower
       bool operator() (IRowConstPtrH& left, IRowConstPtrH& right)
       {
-        for (IFieldDescriptorConstList::const_iterator field = mCompareField->cbegin();
-          field != mCompareField->cend(); ++field)
+        for (IFieldDescriptorConstList::const_iterator field = mCompareField.cbegin();
+          field != mCompareField.cend(); ++field)
         {
           const ValueConstPtrH leftValue = left->getValue(*field->get());
           const ValueConstPtrH rightValue = right->getValue(*field->get());
-
-          // Treat an empty value as less than anything else
-          // TODO: Bug?
-          if (!leftValue && rightValue)
-            return true;
-          if (leftValue && !rightValue)
-            return false;
-          if (!leftValue && !rightValue)
-            return true;
 
           // All previous fields are equal, and this one is less than the other
           if (*leftValue < *rightValue)
@@ -117,7 +108,7 @@ namespace DataStore
       }
 
     private:
-      const IFieldDescriptorConstList* mCompareField;
+      const IFieldDescriptorConstList& mCompareField;
     };
 
     /**
@@ -126,17 +117,14 @@ namespace DataStore
       increases from zero for each field in the scheme).  There should 
       reall be some kind of contract between a scheme and database with 
       which to establish this.
-
-      This represents a COMPLETE row.
     */
     class Row : public IRow
     {
     public:
-      Row(IFieldDescriptorConstListConstPtrH fields) :
-        mFields(fields)
+      Row(const IFieldDescriptorConstList& fields)
       {
         // Reserve space for a complete row.
-        mRow.resize(fields->size());
+        mRow.resize(fields.size());
       }
 
       ValueConstPtrH getValue(const IFieldDescriptor& field) const
@@ -147,17 +135,12 @@ namespace DataStore
           return NULL;
       }
 
-      IFieldDescriptorConstListConstPtrH getFieldDescriptors() const
-      {
-        return mFields;
-      }
-
-      bool setValue(IFieldDescriptorConstPtrH field, 
+      bool setValue(const IFieldDescriptor& field, 
         ValuePtrH value)
       {
-        if ((size_t)field->getId() < mRow.size())
+        if ((size_t)field.getId() < mRow.size())
         {
-          mRow[field->getId()] = value;
+          mRow[field.getId()] = value;
           return true;
         }
         else
@@ -168,73 +151,14 @@ namespace DataStore
 
     private:
       std::vector<ValuePtrH> mRow;
-      // Kinda lame to have each row hang on to a ref to the fields,
-      // but it's convenient, as it allows a row to be passed in
-      // and out of a database while keeping the type information 
-      // close at hand.
-      IFieldDescriptorConstListConstPtrH mFields;
     };
 
     /**
-    Represents a read-only subset of fields within a row
     */
-    class RowSelection : public IRow
+    class Result : public IQueryResult
     {
     public:
-      RowSelection(IFieldDescriptorConstListConstPtrH selectedFields,
-        IRowConstPtrH row) :
-        mSelectedFields(selectedFields),
-        mRow(row)
-      {
-      }
-
-      ValueConstPtrH getValue(const IFieldDescriptor& field) const
-      {
-        if (!isSelected(field))
-          return NULL;
-
-        return mRow->getValue(field);
-      }
-
-      IFieldDescriptorConstListConstPtrH getFieldDescriptors() const
-      {
-        return mSelectedFields;
-      }
-
-      bool setValue(IFieldDescriptorConstPtrH field,
-        ValuePtrH value)
-      {
-        return false; // read only
-      }
-
-    private:
-      bool isSelected(const IFieldDescriptor& field) const
-      {
-        for (IFieldDescriptorConstList::const_iterator selectedField = mSelectedFields->cbegin();
-          selectedField != mSelectedFields->cend(); ++selectedField)
-        {
-          if (**selectedField == field)
-          {
-            return true;
-          }
-        }
-
-        return false;
-      }
-
-      IRowConstPtrH mRow;
-      IFieldDescriptorConstListConstPtrH mSelectedFields;
-    };
-
-    typedef PointerType<RowSelection>::Shared RowSelectionPtrH;
-    typedef PointerType<RowSelection>::SharedConst RowSelectionConstPtrH;
-
-    /**
-    */
-    class Selection : public ISelection
-    {
-    public:
-      Selection(IFieldDescriptorConstListConstPtrH selectedFields,
+      Result(IFieldDescriptorConstListConstPtrH selectedFields,
         IRowConstListConstPtrH selectedRows) :
         mSelectedFields(selectedFields),
         mSelectedRows(selectedRows)
@@ -308,7 +232,7 @@ namespace DataStore
       }
     }
 
-    ISelectionConstPtrH query(
+    IQueryResultConstPtrH query(
       IFieldDescriptorConstListConstPtrH selectFields,
       const Predicate* filterConstraint,
       IFieldDescriptorConstListConstPtrH orderBy)
@@ -320,11 +244,7 @@ namespace DataStore
       {
         if (filterConstraint->matches(*(row->get())))
         {
-          //selectedRows->push_back(*row);
-
-          selectedRows->push_back(
-            IRowConstPtrH(
-              new RowSelection(selectFields, *row)));
+          selectedRows->push_back(*row);
         }
       }
 
@@ -332,11 +252,11 @@ namespace DataStore
       {
         std::sort(selectedRows->begin(),
           selectedRows->end(),
-          IRowOrderByFieldsAscending(orderBy.get()));
+          IRowOrderByFieldsAscending(*(orderBy.get())));
       }
 
-      return ISelectionConstPtrH(
-        new Selection(selectFields, selectedRows));
+      return IQueryResultConstPtrH(
+        new Result(selectFields, selectedRows));
     }
 
   private:
@@ -378,7 +298,7 @@ ISchemeConstPtrH Database::getScheme() const
 
 IRowPtrH Database::createRow() const
 {
-  IRowPtrH newRow(new DatabaseInMemory::Row(mFields));
+  IRowPtrH newRow(new DatabaseInMemory::Row(*(mFields.get())));
   return newRow;
 }
 
@@ -392,9 +312,9 @@ void Database::persist()
   }
 }
 
-bool Database::insert(IRowConstPtrH row, Result* pResult)
+bool Database::insert(IRowConstPtrH row, InsertionResult* pResult)
 {  
-  Result result = eResult_Unknown;
+  InsertionResult result = eInsertionResult_Unknown;
   bool status = false;
 
   //
@@ -417,12 +337,12 @@ bool Database::insert(IRowConstPtrH row, Result* pResult)
   RowIdentifier found = mMemory->lookupRow(matchExactKeys);
   if (found.empty())
   {
-    result = eResult_Inserted;
+    result = eInsertionResult_Inserted;
     status = mMemory->insert(row);
   }
   else
   {
-    result = eResult_Replaced;
+    result = eInsertionResult_Replaced;
     status = mMemory->replace(found, row);
   }
 
@@ -433,7 +353,7 @@ bool Database::insert(IRowConstPtrH row, Result* pResult)
   return status;
 }
 
-ISelectionConstPtrH Database::query(
+IQueryResultConstPtrH Database::query(
   IFieldDescriptorConstListConstPtrH selectFields,
   const Predicate* filterConstraint,
   IFieldDescriptorConstListConstPtrH orderBy)

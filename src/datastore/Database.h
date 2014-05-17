@@ -9,12 +9,14 @@
 
 namespace DataStore
 {
+  /**
+    The in-memory storage strategy used by Database
+  */
   class DatabaseInMemory;
   typedef PointerType<DatabaseInMemory>::Shared DatabaseInMemoryPtrH;
 
   /**
    A selection of particular fields and rows from a database.
-   Outard appearance is similar to std::vector
   */
   struct IQueryResult
   {
@@ -86,6 +88,7 @@ namespace DataStore
   typedef PointerType<IQueryResult>::SharedConst IQueryResultConstPtrH;
 
   /**
+    A database that can hold a single table.
   */
   class Database
   {
@@ -111,11 +114,13 @@ namespace DataStore
 
     ~Database();
 
-    /** Create a new empty row that can be inserted into the database
+    /** 
+      Create a new empty row that can be inserted into the database
     */
     IRowPtrH createRow() const;
 
-    /** Insert row into database.  A duplicate row will be replaced
+    /** 
+      Insert row into database.  A duplicate row will be replaced
     */
     bool insert(IRowConstPtrH row, InsertionResult* pResult = NULL);
 
@@ -133,7 +138,8 @@ namespace DataStore
     */
     ISchemeConstPtrH getScheme() const;
 
-    /** Persist in-memory portion of databas 
+    /** 
+      Persist in-memory portion of database
     */
     void persist();
 

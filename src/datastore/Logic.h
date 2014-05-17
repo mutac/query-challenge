@@ -9,6 +9,7 @@
 namespace DataStore
 {
   /**
+   A logical qualifier, used to constrain portions of a query
   */
   struct IQualifier
   {
@@ -21,6 +22,9 @@ namespace DataStore
   typedef std::vector<IQualifierPtrH> IQualifierList;
   typedef PointerType<IQualifierList>::Shared IQualifierListPtrH;
 
+  /**
+    Logical expression AST nodes
+  */
   namespace Logic
   {
     /**

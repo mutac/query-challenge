@@ -386,8 +386,8 @@ namespace DataStore
     */
     void endPersist()
     {
-      // This is a little silly.. You probably wouldn't want to overwrite
-      // the entire datastore each time.
+      // This is a little silly.. You wouldn't want to overwrite
+      // the entire datastore each time in a real-life scenario
 
       open(eOverwrite);
 
@@ -554,7 +554,6 @@ namespace DataStore
     FILE* mDatabaseFileHandle;
 
     rapidjson::Value* mRowDataRoot;
-
     SchemeJsonConstPtrH mScheme;
   };
 }

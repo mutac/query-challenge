@@ -13,6 +13,9 @@ namespace DataStore
   typedef int FieldId;
 
   /**
+    Provides information about a field, and a method
+    for translating a string into a new instance of
+    an object that represents a value of its type.
   */
   struct IFieldDescriptor
   {
@@ -49,6 +52,8 @@ namespace DataStore
   typedef PointerType<IFieldDescriptorConstList>::SharedConst IFieldDescriptorConstListConstPtrH;
 
   /**
+    Given a type, and other necessary information, 
+    produces an instance of an IFieldDiscriptor
   */
   class FieldDescriptorFactory
   {
@@ -61,6 +66,7 @@ namespace DataStore
   };
 
   /**
+    Base implementation of a typed FieldDescriptor
   */
   class FieldDescriptorBase : public IFieldDescriptor
   {

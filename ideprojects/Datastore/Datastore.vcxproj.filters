@@ -46,9 +46,6 @@
     <ClCompile Include="..\..\src\datastore\FieldDescriptor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\datastore\Scheme.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\datastore\FieldType.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

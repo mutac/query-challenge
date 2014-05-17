@@ -10,51 +10,55 @@
 namespace DataStore
 {
   /**
-  IScheme implementation, reads from a JSON scheme encoding
-
-  Example:
-  @vertabim
-  [
-  {
-  "name": "STB",
-  "type": "text",
-  "size": 64,
-  "key": true,
-  "description": "The set top box id on which the media asset was viewed"
-  },
-  {
-  "name": "TITLE",
-  "type": "text",
-  "size": 64,
-  "description": "The title of the media asset"
-  },
-  {
-  "name": "PROVIDER",
-  "type": "text",
-  "size": 64,
-  "description": "The distributor of the media asset"
-  },
-  {
-  "name": "DATE",
-  "type": "date",
-  "description": "The local date on which the content was leased by through the STB"
-  },
-  {
-  "name": "REV",
-  "type": "float",
-  "size": 32,
-  "description": "The price incurred by the STB to lease the asset. (Price in US dollars and cents)"
-  },
-  {
-  "name": "VIEW_TIME",
-  "type": "time",
-  "description": "The amount of time the STB played the asset"
-  }
-  ]
+    @hidden
+    Hide json encoding/decoding details from client
   */
   class SchemeJsonImpl;
   typedef PointerType<SchemeJsonImpl>::Shared SchemeJsonImplPtrH;
 
+  /**
+  IScheme implementation, reads from a JSON scheme encoding:
+
+  Example:
+  @vertabim
+  [
+    {
+      "name": "STB",
+      "type": "text",
+      "size": 64,
+      "key": true,
+      "description": "The set top box id on which the media asset was viewed"
+    },
+    {
+      "name": "TITLE",
+      "type": "text",
+      "size": 64,
+      "description": "The title of the media asset"
+    },
+    {
+      "name": "PROVIDER",
+      "type": "text",
+      "size": 64,
+      "description": "The distributor of the media asset"
+    },
+    {
+      "name": "DATE",
+      "type": "date",
+      "description": "The local date on which the content was leased by through the STB"
+    },
+    {
+      "name": "REV",
+      "type": "float",
+      "size": 32,
+      "description": "The price incurred by the STB to lease the asset. (Price in US dollars and cents)"
+    },
+    {
+      "name": "VIEW_TIME",
+      "type": "time",
+      "description": "The amount of time the STB played the asset"
+    }
+  ]
+  */
   class SchemeJson : public IScheme
   {
   public:
@@ -83,11 +87,19 @@ namespace DataStore
   typedef PointerType<SchemeJson>::SharedConst SchemeJsonConstPtrH;
 
   /**
+    @hidden
+    Hide json encoding/deconding details from client
   */
   class DataStorageJsonImpl;
   typedef PointerType<DataStorageJsonImpl>::Shared DataStorageJsonImplPtrH;
   
   /**
+  An IDataStorage implementation that stores a scheme and value-row information
+  in a json encoded file.  It is expected that all rows will be loaded into
+  memory at once, and all rows will be written back to it at once.  i.e.
+  it does not support partial loading and repeated access.
+
+  @verbatim
   {
     "scheme": [ //scheme object (above) ],
     "rows": [
@@ -95,6 +107,7 @@ namespace DataStore
       ...
     ]
   }
+  @endverbatim
   */
   class DataStorageJson : public IDataStorage
   {

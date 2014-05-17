@@ -9,6 +9,8 @@ namespace DataStore
   class Database;
   struct IRow;
 
+  /**
+  */
   struct IDataStorage
   {
     virtual ISchemeConstPtrH getScheme() = 0;

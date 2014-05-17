@@ -28,7 +28,6 @@
     <ClCompile Include="..\..\src\datastore\FieldType.cpp" />
     <ClCompile Include="..\..\src\datastore\JsonStorage.cpp" />
     <ClCompile Include="..\..\src\datastore\Logic.cpp" />
-    <ClCompile Include="..\..\src\datastore\Scheme.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A986141E-3FA1-42E1-A865-6EEF5AB6A1A9}</ProjectGuid>

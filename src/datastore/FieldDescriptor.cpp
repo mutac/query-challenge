@@ -6,7 +6,7 @@ using namespace DataStore;
 
 ValuePtrH TextFieldDescriptor::fromString(const char* str) const
 {
-  // BUG: (char*)str constructor does not internally allocate
+  // Bug: (char*)str constructor does not internally allocate
   // memory to hold onto the string
   mStd::mString s(str);
   return ValuePtrH(new Value(s));

@@ -11,6 +11,7 @@
 namespace DataStore
 {
   /**
+    Defines the field types and properties of a database
   */
   struct IScheme
   {

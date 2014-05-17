@@ -154,6 +154,9 @@ namespace DataStore
     };
 
     /**
+      A thin container that stores a reference to a subset of rows from
+      the database, and a reference to a subset of fields.  By the time
+      a row subset makes it into a Result, it has already been ordered.
     */
     class Result : public IQueryResult
     {

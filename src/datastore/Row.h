@@ -9,6 +9,7 @@
 namespace DataStore
 {
   /**
+    Represents a row of values within a database.
   */
   struct IRow
   {

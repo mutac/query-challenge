@@ -8,6 +8,8 @@
 namespace DataStore
 {
   /**
+    The generic container that holds values within a database.  There is
+    no real distinction between this object and an mStd::Variant.
   */
   class Value
   {

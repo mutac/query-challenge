@@ -8,13 +8,14 @@ using namespace DataStore;
 namespace DataStore
 {
   /**
+    Identifies a row within the in-memory database, It's really just
+    a size_t...
   */
   class RowIdentifier
   {
     enum { kEmpty = -1 };
-
-  public:
     typedef size_t IdType;
+  public:
 
     inline static RowIdentifier Empty()
     {
@@ -31,12 +32,28 @@ namespace DataStore
     {
     }
 
+    inline RowIdentifier& operator++()
+    {
+      ++mId;
+      return *this;
+    }
+
+    inline bool operator<(const IdType& id) const
+    {
+      return mId < id;
+    }
+
     inline bool empty() const
     {
       return mId == (IdType)kEmpty;
     }
 
     inline const IdType& getId() const
+    {
+      return mId;
+    }
+
+    inline operator IdType() const
     {
       return mId;
     }
@@ -51,6 +68,11 @@ namespace DataStore
   */
   class DatabaseInMemory
   {
+  protected:
+    typedef std::vector<IRowConstPtrH> IRowConstList;
+    typedef PointerType<IRowConstList>::Shared IRowConstListPtrH;
+    typedef PointerType<IRowConstList>::SharedConst IRowConstListConstPtrH;
+
   public:
     /**
       stl algorithm compatible comparison for sorting a row by a subset of fields
@@ -73,11 +95,20 @@ namespace DataStore
           const ValueConstPtrH leftValue = left->getValue(*field->get());
           const ValueConstPtrH rightValue = right->getValue(*field->get());
 
-          // If a field is less than the other, and all previously compared fields
-          // are equal, then the whole row is considered 'less than' an the other.
+          // Treat an empty value as less than anything else
+          // TODO: Bug?
+          if (!leftValue && rightValue)
+            return true;
+          if (leftValue && !rightValue)
+            return false;
+          if (!leftValue && !rightValue)
+            return true;
 
+          // All previous fields are equal, and this one is less than the other
           if (*leftValue < *rightValue)
             return true;
+
+          // If not equal, don't continue looking at other fields
           if (*leftValue != *rightValue)
             return false;
         }
@@ -203,8 +234,10 @@ namespace DataStore
     class Selection : public ISelection
     {
     public:
-      Selection(IFieldDescriptorConstListConstPtrH selectedFields) :
-        mSelectedFields(selectedFields)
+      Selection(IFieldDescriptorConstListConstPtrH selectedFields,
+        IRowConstListConstPtrH selectedRows) :
+        mSelectedFields(selectedFields),
+        mSelectedRows(selectedRows)
       {
       }
 
@@ -215,33 +248,17 @@ namespace DataStore
 
       IRowConstPtrH operator[](size_t idx) const
       {
-        return mSelectedRows[idx];
+        return (*mSelectedRows)[idx];
       }
 
       size_t size() const
       {
-        return mSelectedRows.size();
-      }
-
-      void addRow(IRowConstPtrH row)
-      {
-        RowSelectionConstPtrH selectedRow(new RowSelection(mSelectedFields, row));
-        mSelectedRows.push_back(selectedRow);
-      }
-
-      void orderBy(const IFieldDescriptorConstList* orderByFields)
-      {
-        if (orderByFields)
-        {
-          std::sort(mSelectedRows.begin(),
-            mSelectedRows.end(),
-            IRowOrderByFieldsAscending(orderByFields));
-        }
+        return mSelectedRows->size();
       }
 
     private:
       IFieldDescriptorConstListConstPtrH mSelectedFields;
-      std::vector<IRowConstPtrH> mSelectedRows;
+      IRowConstListConstPtrH mSelectedRows;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -252,8 +269,7 @@ namespace DataStore
 
     RowIdentifier lookupRow(const Predicate& pred) const
     {
-      // RowIdentifier is kind of weird here...
-      for (RowIdentifier::IdType id = 0; id < mRows.size(); ++id)
+      for (RowIdentifier id(0); id < mRows.size(); ++id)
       {
         if (pred.matches(*mRows[id]))
         {
@@ -266,9 +282,9 @@ namespace DataStore
 
     bool replace(const RowIdentifier& id, IRowConstPtrH row)
     {
-      if (id.getId() < mRows.size())
+      if (id < mRows.size())
       {
-        mRows[id.getId()] = row;
+        mRows[id] = row;
         return true;
       }
       else
@@ -293,33 +309,38 @@ namespace DataStore
     }
 
     ISelectionConstPtrH query(
-      IFieldDescriptorConstListConstPtrH select,
+      IFieldDescriptorConstListConstPtrH selectFields,
       const Predicate* filterConstraint,
       IFieldDescriptorConstListConstPtrH orderBy)
     {
-      Selection* selection = new Selection(select);
+      IRowConstListPtrH selectedRows(new IRowConstList());
 
       for (std::vector<IRowConstPtrH>::const_iterator row = mRows.cbegin();
         row != mRows.cend(); ++row)
       {
         if (filterConstraint->matches(*(row->get())))
         {
-          selection->addRow(*row);
+          //selectedRows->push_back(*row);
+
+          selectedRows->push_back(
+            IRowConstPtrH(
+              new RowSelection(selectFields, *row)));
         }
       }
 
-      // For simplicity, delegate the sorting
-      // to the selection object.
       if (orderBy)
       {
-        selection->orderBy(orderBy.get());
+        std::sort(selectedRows->begin(),
+          selectedRows->end(),
+          IRowOrderByFieldsAscending(orderBy.get()));
       }
 
-      return ISelectionConstPtrH(selection);
+      return ISelectionConstPtrH(
+        new Selection(selectFields, selectedRows));
     }
 
   private:
-    std::vector<IRowConstPtrH> mRows;
+    IRowConstList mRows;
   };
 }
 

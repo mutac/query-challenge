@@ -2,7 +2,7 @@
 
 Sections 1 and 2.1 of the Problem Description are implemented by this project in C++.
 
-See included [UML Diagram]([https://github.com/mutac/query-challenge/blob/master/query-challenge-uml.png) for a few design detail.s
+See included [UML Diagram]([github.com/mutac/query-challenge/blob/master/query-challenge-uml.png) for a few design detail.s
 
 ## Build
 

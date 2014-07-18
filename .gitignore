@@ -5,7 +5,10 @@
 *.suo
 *.user
 *.sln.docstates
+.*.swp
 examples/db.json
+examples/query
+examples/import
 
 # Build results
 
@@ -156,3 +159,10 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+
+
+
+# =========================
+# Project build
+# =========================
+build.sh

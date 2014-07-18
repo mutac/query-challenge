@@ -47,12 +47,12 @@ int main(int argc, char** argv)
     DataStore::DatabasePtrH database;
     if (isInCreateMode)
     {
-      // Create a new db 
+      // Create a new db
       database = DataStore::DataStorageJson::Create(
         createUsingSchemeArg.getValue().c_str(),
         datastoreFileArg.getValue().c_str());
 
-      std::cout << "Database \"" << datastoreFileArg.getValue() 
+      std::cout << "Database \"" << datastoreFileArg.getValue()
         << "\" created" << std::endl;
 
       // and exit
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
       {
         std::string ex = "Unable to open input file \"" +
           importFileArg.getValue() + "\"";
-        throw std::exception(ex.c_str());
+        throw std::runtime_error(ex);
       }
       input = &inputFile;
     }
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     getStringValues(header, &headerFieldNames);
     if (!scheme->allFieldsPresent(headerFieldNames))
     {
-      throw std::exception("Header does not match scheme");
+      throw std::runtime_error("Header does not match scheme");
     }
 
     int replacedCount = 0;
@@ -120,29 +120,29 @@ int main(int argc, char** argv)
           std::stringstream ex;
           ex << "Row is missing a field, at line: " << line;
           std::string str = ex.str();
-          throw std::exception(str.c_str());
+          throw std::runtime_error(str);
         }
 
         // Parse each value in row.
 
         DataStore::IRowPtrH row = database->createRow();
-        
-        DataStore::IFieldDescriptorConstList::const_iterator fieldDescriptor = 
+
+        DataStore::IFieldDescriptorConstList::const_iterator fieldDescriptor =
           fieldDescriptors->cbegin();
         std::vector<std::string>::const_iterator stringValue = stringValues.cbegin();
 
         while (stringValue != stringValues.cend() && fieldDescriptor != fieldDescriptors->cend())
         {
-          std::shared_ptr<DataStore::Value> value = 
+          DataStore::ValuePtrH value =
             (*fieldDescriptor)->fromString(stringValue->c_str());
- 
+
           if (!value)
           {
             std::stringstream ex;
-            ex << "Malformed value in field \"" << (*fieldDescriptor)->getName() 
+            ex << "Malformed value in field \"" << (*fieldDescriptor)->getName()
               << "\" : \"" << *stringValue << "\", at line " << line;
             std::string str = ex.str();
-            throw std::exception(str.c_str());
+            throw std::runtime_error(str);
           }
 
           if (!row->setValue(*(fieldDescriptor->get()), value))
@@ -151,7 +151,7 @@ int main(int argc, char** argv)
             ex << "Unable to add value to row at field \"" << (*fieldDescriptor)->getName()
               << "\" with value \"" << *stringValue << "\", at line" << line;
             std::string str = ex.str();
-            throw std::exception(str.c_str());
+            throw std::runtime_error(str);
           }
 
           ++stringValue;
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
           std::stringstream ex;
           ex << "Error inserting row at line " << line;
           std::string str = ex.str();
-          throw std::exception(str.c_str());
+          throw std::runtime_error(str);
         }
 
         if (insertionResult == DataStore::Database::eInsertionResult_Inserted)

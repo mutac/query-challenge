@@ -87,7 +87,7 @@ namespace DataStore
       }
 
       // going through the shared pointer here will make this slower
-      bool operator() (IRowConstPtrH& left, IRowConstPtrH& right)
+      bool operator() (const IRowConstPtrH& left, const IRowConstPtrH& right)
       {
         for (IFieldDescriptorConstList::const_iterator field = mCompareField.cbegin();
           field != mCompareField.cend(); ++field)
@@ -324,17 +324,17 @@ bool Database::insert(IRowConstPtrH row, InsertionResult* pResult)
   // Create constraint that will match iff all key fields are exact
   //
 
-  Logic::And* and = new Logic::And();
+  Logic::And* andTogether = new Logic::And();
   for (IFieldDescriptorConstList::const_iterator keyField = mKeyFields->cbegin();
     keyField != mKeyFields->cend(); ++keyField)
   {
     IFieldDescriptorConstPtrH field = *keyField;
 
     IQualifierPtrH exactKeyValue(new Logic::Exact(field, row->getValue(*field)));
-    and->with(exactKeyValue);
+    andTogether->with(exactKeyValue);
   }
 
-  IQualifierPtrH exactKeys(and);
+  IQualifierPtrH exactKeys(andTogether);
   Predicate matchExactKeys(exactKeys);
 
   RowIdentifier found = mMemory->lookupRow(matchExactKeys);

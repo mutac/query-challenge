@@ -1,12 +1,13 @@
 
 #include <datastore/JsonStorage.h>
 #include <datastore/Database.h>
+#include <stdexcept>
 
 // Throw exceptions rather than assert on JSON parsing failures:
 #define RAPIDJSON_ASSERT(x)         \
 do {                                \
   if (!(x))                         \
-    throw std::exception(#x);       \
+    throw std::runtime_error(#x);   \
 } while (0)
 
 #include <rapidjson/document.h>
@@ -81,7 +82,7 @@ namespace DataStore
       {
         std::string ex = "Invalid Scheme JSON: expected array, found ";
         ex += jsonTypeToString(root->GetType());
-        throw std::exception(ex.c_str());
+        throw std::runtime_error(ex);
       }
 
       FieldId fieldId = 0;
@@ -93,7 +94,7 @@ namespace DataStore
         {
           std::string ex = "Invalid Scheme JSON: Expected object, found ";
           ex += jsonTypeToString(field->GetType());
-          throw std::exception(ex.c_str());
+          throw std::runtime_error(ex);
         }
 
         //
@@ -140,7 +141,7 @@ namespace DataStore
           {
             std::string ex("Invalid Scheme JSON: Unexpected member: ");
             ex += memberName;
-            throw std::exception(ex.c_str());
+            throw std::runtime_error(ex);
           }
         }
 
@@ -151,7 +152,7 @@ namespace DataStore
         {
           std::string ex("Internal error creating FieldDescriptor for ");
           ex += name;
-          throw std::exception(ex.c_str());
+          throw std::runtime_error(ex);
         }
 
         if (fieldDescriptor->isKey())
@@ -250,13 +251,13 @@ namespace DataStore
       {
         if (strlen((*field)->getName()) == 0)
         {
-          throw std::exception("Unmet Scheme Constraints: 'name' member is required");
+          throw std::runtime_error("Unmet Scheme Constraints: 'name' member is required");
         }
         if ((*field)->getType() == DataStore::TypeInfo_Empty)
         {
           std::string ex("Unmet Scheme Constraints: Invalid 'type' in ");
           ex += (*field)->getName();
-          throw std::exception();
+          throw std::runtime_error(ex);
         }
         if ((*field)->isKey())
         {
@@ -268,7 +269,7 @@ namespace DataStore
 
       if (!hasOneKey)
       {
-        throw std::exception("Unmet Scheme Constraints: At least one field must be a 'key'");
+        throw std::runtime_error("Unmet Scheme Constraints: At least one field must be a 'key'");
       }
     }
 
@@ -434,7 +435,7 @@ namespace DataStore
       {
         std::string ex = "Unable to open database \"" +
           mDatabaseFilename + "\"";
-        throw std::exception(ex.c_str());
+        throw std::runtime_error(ex);
       }
     }
 
@@ -459,7 +460,7 @@ namespace DataStore
         {
           std::string ex = "Invalid Database JSON: expected array, found ";
           ex += jsonTypeToString(mDatabase.GetType());
-          throw std::exception(ex.c_str());
+          throw std::runtime_error(ex);
         }
 
         bool foundScheme = false;
@@ -485,11 +486,11 @@ namespace DataStore
 
         if (!foundScheme)
         {
-          throw std::exception("Invalid Database JSON: \"scheme\" member not found");
+          throw std::runtime_error("Invalid Database JSON: \"scheme\" member not found");
         }
         if (!foundRows)
         {
-          throw std::exception("Invalid Database JSON: \"rows\" member not found");
+          throw std::runtime_error("Invalid Database JSON: \"rows\" member not found");
         }
       }
     }
@@ -511,7 +512,7 @@ namespace DataStore
         {
           std::string ex = "Invalid Database JSON: expected array, found ";
           ex += jsonTypeToString(mRowDataRoot->GetType());
-          throw std::exception(ex.c_str());
+          throw std::runtime_error(ex);
         }
 
         //
@@ -525,7 +526,7 @@ namespace DataStore
           {
             std::string ex = "Invalid Database JSON: expected array, found ";
             ex += jsonTypeToString(row->GetType());
-            throw std::exception(ex.c_str());
+            throw std::runtime_error(ex);
           }
 
           IRowPtrH newRow = database->createRow();
@@ -543,7 +544,7 @@ namespace DataStore
           // this does an implicit search.
           if (!database->insert(newRow))
           {
-            throw std::exception("Invalid Database JSON: corrupt row");
+            throw std::runtime_error("Invalid Database JSON: corrupt row");
           }
         }
       }
@@ -650,7 +651,7 @@ DatabasePtrH DataStorageJson::Create(const char* schemeFilename, const char* new
     std::string ex = "Unable to open scheme file \"";
     ex += schemeFilename;
     ex += +"\"";
-    throw std::exception(ex.c_str());
+    throw std::runtime_error(ex);
   }
 
   SchemeJsonPtrH scheme(new SchemeJson(schemeFile));

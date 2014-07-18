@@ -35,12 +35,22 @@ mStd::mString Date::toString() const
 {
   struct tm timeDetails = { 0 };
 
+#ifdef _MSC_VER
   localtime_s(&timeDetails, &mDate);
+#else
+  localtime_r(&mDate, &timeDetails);
+#endif
 
   char v[11 + 1];
-  sprintf_s(v, sizeof(v), "%04d-%02d-%02d", 
-    timeDetails.tm_year + 1900, 
-    timeDetails.tm_mon + 1, 
+
+#ifdef _MSC_VER
+  sprintf_s(
+#else
+  snprintf(
+#endif
+    v, sizeof(v), "%04d-%02d-%02d",
+    timeDetails.tm_year + 1900,
+    timeDetails.tm_mon + 1,
     timeDetails.tm_mday);
   return mStd::mString(v);
 }
@@ -69,7 +79,12 @@ bool Time::fromString(const char* str)
 mStd::mString Time::toString() const
 {
   char v[11 + 1];
-  sprintf_s(v, sizeof(v), "%02d:%04d",
+#ifdef _MSC_VER
+  sprintf_s(
+#else
+  snprintf(
+#endif
+    v, sizeof(v), "%02d:%04d",
     (mTime >> 12), (mTime & 0xFFF));
   return mStd::mString(v);
 }

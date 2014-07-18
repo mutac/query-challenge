@@ -12,7 +12,18 @@ See included [UML Diagram](https://github.com/mutac/query-challenge/blob/master/
   $ git clone --recursive git@github.com:mutac/query-challenge.git
   ```
   
-2. Launch Visual Studio 2013 solution located in query-challenge/ideprojects/
+2. Build
+
+  Visual Studio: Launch Visual Studio 2013 solution located in query-challenge/ideprojects/
+
+  OR
+
+  ```
+    $ sudo apt-get-install cmake
+    $ ./bootstrap.sh
+    $ ./build.sh
+  ```
+
 3. Build the solution (this builds Import.exe and Query.exe in query-challenge/examples)
 
 ## Usage

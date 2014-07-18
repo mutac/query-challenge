@@ -2,7 +2,7 @@
 #ifndef __VALUE_H__
 #define __VALUE_H__
 
-#include <resource/Variant.h>
+#include <Resource/Variant.h>
 #include <datastore/PointerType.h>
 
 namespace DataStore

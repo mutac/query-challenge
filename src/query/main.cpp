@@ -85,7 +85,7 @@ DataStore::IFieldDescriptorConstListPtrH parseFieldNameList(const std::string& e
     {
       std::string ex = "Unrecognized field \"" + *selectedFieldName +
         "\"" + " specified in list";
-      throw std::exception(ex.c_str());
+      throw std::runtime_error(ex);
     }
 
     selectedFields->push_back(selectedField);
@@ -113,7 +113,7 @@ DataStore::IQualifierPtrH parseFilterExpression(const std::string& expression,
     expectedValue);
   if (parsedItems != 2)
   {
-    throw std::exception("Syntax error in filter expression");
+    throw std::runtime_error("Syntax error in filter expression");
   }
 
   DataStore::IFieldDescriptorConstPtrH field = findFieldByName(fieldName, fields);
@@ -122,14 +122,14 @@ DataStore::IQualifierPtrH parseFilterExpression(const std::string& expression,
     std::string ex = "Unrecognized field \"";
     ex += fieldName;
     ex += "\" specified in filter expression";
-    throw std::exception(ex.c_str());
+    throw std::runtime_error(ex);
   }
 
   DataStore::ValuePtrH desiredValue = field->fromString(expectedValue);
   if (!desiredValue)
   {
     std::string ex = "Syntax error in filter expression, value format is incorrect";
-    throw std::exception(ex.c_str());
+    throw std::runtime_error(ex);
   }
 
   DataStore::IQualifierPtrH exactMatch(new DataStore::Logic::Exact(field, desiredValue));
@@ -210,10 +210,10 @@ int main(int argc, char** argv)
     cmd.add(selectArg);
     cmd.add(filterArg);
     cmd.add(orderArg);
-    cmd.add(datastoreFileArg);    
+    cmd.add(datastoreFileArg);
     cmd.parse(argc, argv);
 
-    DataStore::DatabasePtrH database = 
+    DataStore::DatabasePtrH database =
       DataStore::DataStorageJson::Load(datastoreFileArg.getValue().c_str());
 
     DataStore::IFieldDescriptorConstListConstPtrH allFields =
@@ -235,7 +235,7 @@ int main(int argc, char** argv)
     DataStore::IFieldDescriptorConstListPtrH selectedFields;
     if (selectArg.isSet())
     {
-      selectedFields = parseFieldNameList(selectArg.getValue(), 
+      selectedFields = parseFieldNameList(selectArg.getValue(),
         *(allFields.get()));
     }
 
@@ -246,7 +246,7 @@ int main(int argc, char** argv)
     DataStore::Predicate filter = DataStore::Predicate::AlwaysTrue();
     if (filterArg.isSet())
     {
-      DataStore::IQualifierPtrH filterAst = 
+      DataStore::IQualifierPtrH filterAst =
         parseFilterExpression(filterArg.getValue(), *(allFields.get()));
       filter = DataStore::Predicate(filterAst);
     }
@@ -259,7 +259,7 @@ int main(int argc, char** argv)
     DataStore::IFieldDescriptorConstListPtrH orderByFields;
     if (orderArg.isSet())
     {
-      orderByFields = parseFieldNameList(orderArg.getValue(), 
+      orderByFields = parseFieldNameList(orderArg.getValue(),
         *(allFields.get()));
     }
 
@@ -267,7 +267,7 @@ int main(int argc, char** argv)
     // Perform query, and print result
     //
 
-    DataStore::IQueryResultConstPtrH result = 
+    DataStore::IQueryResultConstPtrH result =
       database->query(selectedFields, &filter, orderByFields);
     printResult(*(result.get()));
   }

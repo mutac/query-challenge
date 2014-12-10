@@ -19,7 +19,7 @@ See included [UML Diagram](https://github.com/mutac/query-challenge/blob/master/
   OR
 
   ```
-    $ sudo apt-get-install cmake
+    $ sudo apt-get install cmake
     $ ./bootstrap.sh
     $ ./build.sh
   ```

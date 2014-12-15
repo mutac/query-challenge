@@ -20,9 +20,9 @@ namespace DataStore
   using mStd::TypeInfo_String;
   using mStd::TypeInfo_Float;
 
-  // Begin user types at 20
-  static const TypeInfo TypeInfo_Date = 20;
-  static const TypeInfo TypeInfo_Time = 21;
+  // New types
+  mTypeInfoDecl(TypeInfo_Date, 0);
+  mTypeInfoDecl(TypeInfo_Time, 1);
 
   /**
     Date type: YYYY-MM-DD
@@ -110,7 +110,7 @@ namespace mStd
   }
 
   template<>
-  bool type_conversion(const DataStore::Date& from, 
+  bool type_conversion(const DataStore::Date& from,
     const TypeInfo& toType, Variant* to);
 
   template<>
